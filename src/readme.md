@@ -1,2 +1,0 @@
-# QuoteX
-Quote Server
