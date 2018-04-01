@@ -198,15 +198,18 @@ ENDIF ()
 ADD_EXECUTABLE (${PROJECT_NAME} ${QUOTEX_HEADER_FILES} ${QUOTEX_SOURCE_FILES})
 
 IF (WIN32)
-    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.lib global.lib shares.lib common.lib syslog.lib)
+    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.lib global.lib shares.lib common.lib syslog.lib syscfg.lib plugins.lib)
 ELSEIF (UNIX)
-    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.a global.a shares.a common.a syslog.a)
+    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.a global.a shares.a common.a syslog.a syscfg.a plugins.a)
 ELSEIF (APPLE)
-    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.a global.a shares.a common.a syslog.a)
+    TARGET_LINK_LIBRARIES (${PROJECT_NAME} libtcmalloc.a global.a shares.a common.a syslog.a syscfg.a plugins.a)
 ENDIF ()
 
 IF (WIN32)
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/configx")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -221,11 +224,17 @@ IF (WIN32)
     IF (CMAKE_LINKTYPE_SHARED)
         INSTALL (
 	        FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.dll" 
+		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.dll" 
+		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.dll" 
 		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.dll" 
 		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.dll" 
 	        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
 	    )
     ENDIF ()
+    INSTALL (
+	    FILES "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
+	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/../changes.md" 
 	          "${PROJECT_SOURCE_DIR}/../license_bsd.txt" 
@@ -235,11 +244,14 @@ IF (WIN32)
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/doc"
 	)
     INSTALL (
-	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_main.ini" 
-	    DESTINATION "${CMAKE_INSTALL_PREFIX}/etc"
+	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_basic.ini" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/configx"
 	)
 ELSEIF ((UNIX) OR (APPLE))
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/configx")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -255,12 +267,19 @@ ELSEIF ((UNIX) OR (APPLE))
     IF (CMAKE_LINKTYPE_SHARED)
         INSTALL (
 	        FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.so" 
+		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.so" 
+		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.so" 
 		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.so" 
 		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.so" 
 	        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
 	        # PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
 	    )
     ENDIF ()
+    INSTALL (
+	    FILES "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
+		# PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
+	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/../changes.md" 
 	          "${PROJECT_SOURCE_DIR}/../license_bsd.txt" 
@@ -271,8 +290,8 @@ ELSEIF ((UNIX) OR (APPLE))
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)
     INSTALL (
-	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_main.ini" 
-	    DESTINATION "${CMAKE_INSTALL_PREFIX}/etc" 
+	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_basic.ini" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/configx" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)
 ENDIF ()
