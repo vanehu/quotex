@@ -56,15 +56,20 @@ const unsigned int g_wm_taskbar_created = ::RegisterWindowMessage( L"TaskBarCrea
 
 void SystemUninitialize() { // 在控制台事件和单例限制退出时调用会异常
 	try {
-		basicx::Plugins* plugins = basicx::Plugins::GetInstance(); // 2
+		basicx::Plugins* plugins = basicx::Plugins::GetInstance(); // 03
 		if( plugins != nullptr ) {
 			plugins->~Plugins();
 		}
 
-		// basicx::SysLog_S* syslog = basicx::SysLog_S::GetInstance(); // 1
-		// if( syslog != nullptr ) {
-		//     syslog->~SysLog_S();
-		// }
+		basicx::SysCfg_S* syscfg = basicx::SysCfg_S::GetInstance(); // 02
+		if( syscfg != nullptr ) {
+			syscfg->~SysCfg_S();
+		}
+
+		basicx::SysLog_S* syslog = basicx::SysLog_S::GetInstance(); // 01
+		if( syslog != nullptr ) {
+		    syslog->~SysLog_S();
+		}
 	} // try
 	catch( ... ) {}
 }
