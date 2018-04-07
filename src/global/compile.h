@@ -31,6 +31,11 @@
 #define QUOTEX_SHARES_EXP
 //#define QUOTEX_SHARES_IMP
 
+//---------- 各类插件 ----------//
+
+#define QUOTER_CTP_EXP
+//#define QUOTER_CTP_IMP
+
 //---------- 设置结束 ----------//
 
 #ifdef QUOTEX_GLOBAL_EXP
@@ -49,6 +54,16 @@
 
 #ifdef QUOTEX_SHARES_IMP
     #define QUOTEX_SHARES_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_CTP_EXP
+    #define QUOTER_CTP_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_CTP_IMP
+    #define QUOTER_CTP_EXPIMP __declspec(dllimport)
 #endif
 
 //------------------------------//
