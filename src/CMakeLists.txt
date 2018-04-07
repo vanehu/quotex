@@ -25,6 +25,7 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 
 SET_PROPERTY (GLOBAL PROPERTY USE_FOLDERS ON)
 
+# 考虑接口兼容和平台架构，本项目限制选项 CMAKE_PLATFORM_X64：OFF 且 CMAKE_LINKTYPE_SHARED：ON
 OPTION (CMAKE_PLATFORM_X64 "platform x86 or x64." OFF) # 启用则 64 位，禁用则 32 位
 OPTION (CMAKE_LINKTYPE_SHARED "link type shared or static." ON) # 启用则动态链接，禁用则静态链接
 OPTION (CMAKE_COMPILE_RELEASE "compile release or debug." ON) # 启用则 release 版，禁用则 debug 版
@@ -183,6 +184,7 @@ SOURCE_GROUP ("Source Files" FILES ${QUOTEX_SOURCE_FILES})
 
 ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/global")
 ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/shares")
+ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/pluginx")
 
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}" "${SDKDIR_BASICX_INCLUDE}")
 
@@ -210,6 +212,7 @@ IF (WIN32)
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/configx")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx/quoter_ctp")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -221,16 +224,14 @@ IF (WIN32)
 	    PROGRAMS "${SDKDIR_BASICX_LIBRARY_RELEASE}/libtcmalloc.dll" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
 	)
-    IF (CMAKE_LINKTYPE_SHARED)
-        INSTALL (
-	        FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.dll" 
-		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.dll" 
-		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.dll" 
-		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.dll" 
-		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.dll" 
-	        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
-	    )
-    ENDIF ()
+    INSTALL (
+	    FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.dll" 
+		      "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.dll" 
+		      "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.dll" 
+		      "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.dll" 
+		      "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.dll" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
@@ -247,11 +248,18 @@ IF (WIN32)
 	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_basic.ini" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/configx"
 	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ctp.dll" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/pluginx/quoter_ctp"
+	)
 ELSEIF ((UNIX) OR (APPLE))
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/configx")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/pluginx/quoter_ctp")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -264,17 +272,15 @@ ELSEIF ((UNIX) OR (APPLE))
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" 
 		# PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
 	)
-    IF (CMAKE_LINKTYPE_SHARED)
-        INSTALL (
-	        FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.so" 
-		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.so" 
-		          "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.so" 
-		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.so" 
-		          "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.so" 
-	        DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
-	        # PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
-	    )
-    ENDIF ()
+    INSTALL (
+	    FILES "${SDKDIR_BASICX_LIBRARY_RELEASE}/syslog.so" 
+		      "${SDKDIR_BASICX_LIBRARY_RELEASE}/syscfg.so" 
+		      "${SDKDIR_BASICX_LIBRARY_RELEASE}/plugins.so" 
+		      "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/global.so" 
+		      "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/shares.so" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+	    # PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
+	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
@@ -292,6 +298,13 @@ ELSEIF ((UNIX) OR (APPLE))
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/../etc/cfg_basic.ini" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/configx" 
+		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
+	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ctp.so" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/pluginx/quoter_ctp" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)
 ENDIF ()
