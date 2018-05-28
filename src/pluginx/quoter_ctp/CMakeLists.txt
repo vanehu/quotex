@@ -19,7 +19,7 @@
 #
 # Be sure to retain the above copyright notice and conditions.
 
-INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}" "${SDKDIR_BASICX_INCLUDE}")
+INCLUDE_DIRECTORIES (${Boost_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}" "${SDKDIR_BASICX_INCLUDE}" "${SDKDIR_INTERFACE}/CTP_F")
 
 # Boost 的附加库目录会自动添加
 IF (CMAKE_LINKTYPE_SHARED) # 插件仅限动态链接模式
@@ -28,9 +28,12 @@ IF (CMAKE_LINKTYPE_SHARED) # 插件仅限动态链接模式
         SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LIBPATH:\"${PROJECT_BINARY_DIR}/archive/Release\"")
 		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /LIBPATH:\"${SDKDIR_BASICX_LIBRARY_DEBUG}\"")
         SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LIBPATH:\"${SDKDIR_BASICX_LIBRARY_RELEASE}\"")
+		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /LIBPATH:\"${SDKDIR_INTERFACE}/CTP_F\"")
+        SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LIBPATH:\"${SDKDIR_INTERFACE}/CTP_F\"")
     ELSE ()
         LINK_DIRECTORIES (${PROJECT_BINARY_DIR}/archive) # need check
 		LINK_DIRECTORIES (${PROJECT_BINARY_DIR}/archive) # need check
+        LINK_DIRECTORIES (${PROJECT_BINARY_DIR}/archive) # need check
         LINK_DIRECTORIES (${PROJECT_BINARY_DIR}/archive) # need check
     ENDIF ()
 ENDIF ()
@@ -44,10 +47,10 @@ SOURCE_GROUP ("Source Files" FILES ${PLUGIN_TEST_1_SOURCE_FILES})
 IF (CMAKE_LINKTYPE_SHARED) # 插件仅限动态链接模式
     ADD_LIBRARY ("quoter_ctp" SHARED ${PLUGIN_TEST_1_HEADER_FILES} ${PLUGIN_TEST_1_SOURCE_FILES})
     IF (WIN32)
-        TARGET_LINK_LIBRARIES ("quoter_ctp" common.lib syslog.lib plugins.lib)
+        TARGET_LINK_LIBRARIES ("quoter_ctp" common.lib syslog.lib plugins.lib thostmduserapi.lib thosttraderapi.lib)
     ELSEIF (UNIX)
-        TARGET_LINK_LIBRARIES ("quoter_ctp" common.a syslog.a plugins.a)
+        TARGET_LINK_LIBRARIES ("quoter_ctp" common.a syslog.a plugins.a thostmduserapi.a thosttraderapi.a)
     ELSEIF (APPLE)
-        TARGET_LINK_LIBRARIES ("quoter_ctp" common.a syslog.a plugins.a)
+        TARGET_LINK_LIBRARIES ("quoter_ctp" common.a syslog.a plugins.a thostmduserapi.a thosttraderapi.a)
     ENDIF ()
 ENDIF ()
