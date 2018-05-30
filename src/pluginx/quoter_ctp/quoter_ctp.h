@@ -48,7 +48,7 @@ public:
 	virtual bool AssignTask( int32_t task_id, int32_t identity, int32_t code, std::string& data );
 
 private:
-	QuoterCTP_P* m_p;
+	QuoterCTP_P* m_quoter_ctp_p;
 
 // 自定义成员函数和变量
 

@@ -42,7 +42,7 @@
 #include "zlib.h"
 #include "json/json.h"
 
-#include <network/client.h>
+#include <network/server.h>
 
 #include "define_ctp.h"
 
