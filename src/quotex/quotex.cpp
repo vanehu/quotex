@@ -35,6 +35,8 @@
 #include <common/common.h>
 #include <syslog/syslog.h>
 #include <syscfg/syscfg.h>
+#include <sysrtm/sysrtm.h>
+#include <sysdbi_s/sysdbi_s.h>
 #include <plugins/plugins.h>
 
 #include "global/define.h"
@@ -56,9 +58,19 @@ const unsigned int g_wm_taskbar_created = ::RegisterWindowMessage( L"TaskBarCrea
 
 void SystemUninitialize() { // 在控制台事件和单例限制退出时调用会异常
 	try {
-		basicx::Plugins* plugins = basicx::Plugins::GetInstance(); // 03
+		basicx::Plugins* plugins = basicx::Plugins::GetInstance(); // 05
 		if( plugins != nullptr ) {
 			plugins->~Plugins();
+		}
+
+		basicx::SysDBI_S* sysdbi_s = basicx::SysDBI_S::GetInstance(); // 04
+		if( sysdbi_s != nullptr ) {
+			sysdbi_s->~SysDBI_S();
+		}
+
+		basicx::SysRtm_S* sysrtm = basicx::SysRtm_S::GetInstance(); // 03
+		if( sysrtm != nullptr ) {
+			sysrtm->~SysRtm_S();
 		}
 
 		basicx::SysCfg_S* syscfg = basicx::SysCfg_S::GetInstance(); // 02
@@ -284,6 +296,7 @@ bool SystemInitialize() {
 	std::string log_cate = "<SYSTEM_INIT>";
 	basicx::SysLog_S* syslog = basicx::SysLog_S::GetInstance();
 	basicx::SysCfg_S* syscfg = basicx::SysCfg_S::GetInstance();
+	basicx::SysRtm_S* sysrtm = basicx::SysRtm_S::GetInstance();
 	basicx::Plugins* plugins = basicx::Plugins::GetInstance();
 
 	syslog->LogWrite( basicx::syslog_level::c_info, log_cate, std::string( "开始系统初始化 ...\r\n" ) );
@@ -294,8 +307,8 @@ bool SystemInitialize() {
 		syscfg->ReadCfgBasic( syscfg->GetPath_CfgBasic() );
 		basicx::CfgBasic* cfg_basic = syscfg->GetCfgBasic();
 
-		// syslog->LogPrint( basicx::syslog_level::c_info, log_cate, std::string( "LOG>: 开启 运行监控服务 ...." ) );
-		// sysrtm->StartNetServer();
+		syslog->LogPrint( basicx::syslog_level::c_info, log_cate, std::string( "LOG>: 开启 运行监控服务 ...." ) );
+		sysrtm->StartNetServer();
 
 		syslog->LogPrint( basicx::syslog_level::c_info, log_cate, std::string( "LOG>: 启动 插件管理服务 ...." ) );
 		plugins->StartPlugins();
@@ -344,7 +357,9 @@ int main( int argc, char* argv[] ) {
 	basicx::SysCfg_S syscfg_s; // 唯一实例 // 02
 	basicx::SysCfg_S* syscfg = basicx::SysCfg_S::GetInstance();
 	syscfg->SetGlobalPath( "cfg_basic.ini" );
-	basicx::Plugins plugins; // 唯一实例 // 03
+	basicx::SysRtm_S sysrtm; // 唯一实例 // 03
+	basicx::SysDBI_S sysdbi_s; // 唯一实例 // 04
+	basicx::Plugins plugins; // 唯一实例 // 05
 
 	// syslog->ClearScreen( 0, 0, true, 3000 ); // 等待 3 秒清屏
 

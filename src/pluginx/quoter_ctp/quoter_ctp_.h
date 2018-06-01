@@ -77,6 +77,7 @@ public:
 
 	bool m_plugin_running;
 
+	std::string m_log_cate;
 	basicx::SysLog_S* m_syslog;
 	basicx::SysCfg_S* m_syscfg;
 	basicx::SysRtm_S* m_sysrtm;
@@ -164,6 +165,7 @@ public:
 	void OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* pDepthMarketData ) override;
 
 private:
+	std::string m_log_cate;
 	CThostFtdcMdApi* m_user_api;
 	QuoterCTP_P* m_quoter_ctp_p;
 };
@@ -210,6 +212,7 @@ public:
 	int32_t m_session_id; // »á»°±àºÅ
 
 private:
+	std::string m_log_cate;
 	CThostFtdcTraderApi* m_user_api;
 	QuoterCTP_P* m_quoter_ctp_p;
 };
