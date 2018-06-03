@@ -32,6 +32,7 @@
 #pragma comment( lib, "shell32.lib" ) // Shell_NotifyIcon
 #pragma comment( lib, "netapi32.lib" ) // 获取 Mac 地址
 
+#include <common/assist.h>
 #include <common/common.h>
 #include <syslog/syslog.h>
 #include <syscfg/syscfg.h>
@@ -54,7 +55,7 @@ struct ASTAT // 获取 Mac 地址
 	NAME_BUFFER name_buffer[30];
 };
 
-const unsigned int g_wm_taskbar_created = ::RegisterWindowMessage( L"TaskBarCreated" ); // 桌面重启后更新托盘图标
+const uint32_t g_wm_taskbar_created = ::RegisterWindowMessage( L"TaskBarCreated" ); // 桌面重启后更新托盘图标
 
 void SystemUninitialize() { // 在控制台事件和单例限制退出时调用会异常
 	try {
@@ -86,7 +87,7 @@ void SystemUninitialize() { // 在控制台事件和单例限制退出时调用�
 	catch( ... ) {}
 }
 
-int __stdcall ConsoleHandler( unsigned long event ) { // 控制台事件检测
+int32_t __stdcall ConsoleHandler( unsigned long event ) { // 控制台事件检测
 	std::string log_cate = "<SYSTEM_EVENT>";
 	basicx::SysLog_S* syslog = basicx::SysLog_S::GetInstance();
 
@@ -253,11 +254,7 @@ void SetConsoleWindow() {
 	// 更改窗体标题
 	std::string console_title;
 	FormatLibrary::StandardLibrary::FormatTo( console_title, "{0} {1}", DEF_APP_NAME, DEF_APP_VERSION );
-	int32_t number = MultiByteToWideChar( 0, 0, console_title.c_str(), -1, NULL, 0 );
-	wchar_t* temp_console_title = new wchar_t[number];
-	MultiByteToWideChar( 0, 0, console_title.c_str(), -1, temp_console_title, number );
-	SetConsoleTitle( temp_console_title ); // 修改 Console 窗口标题
-	delete[] temp_console_title;
+	SetConsoleTitle( basicx::StringToWideChar( console_title ).c_str() ); // 修改 Console 窗口标题
 }
 
 void SetSystemTrayIcon() {
@@ -340,7 +337,7 @@ bool SystemInitialize() {
 	return true;
 }
 
-int main( int argc, char* argv[] ) {
+int32_t main( int32_t argc, char* argv[] ) {
 	std::string log_info;
 	std::string log_cate = "<SYSTEM_MAIN>";
 	basicx::SysLog_S syslog_s( DEF_APP_NAME ); // 唯一实例 // 01

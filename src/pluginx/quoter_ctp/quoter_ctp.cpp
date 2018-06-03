@@ -69,22 +69,20 @@ QuoterCTP_P::QuoterCTP_P()
 
 QuoterCTP_P::~QuoterCTP_P() {
 	if( m_output_buf_snapshot_future != nullptr ) {
-		delete [] m_output_buf_snapshot_future;
+		delete[] m_output_buf_snapshot_future;
 		m_output_buf_snapshot_future = nullptr;
 	}
 
-	std::map<std::string, ConSubOne*>::iterator it_os_m;
-	for( it_os_m = m_csm_snapshot_future.m_map_con_sub_one.begin(); it_os_m != m_csm_snapshot_future.m_map_con_sub_one.end(); it_os_m++ ) {
-		if( it_os_m->second != nullptr ) {
-			delete it_os_m->second;
+	for( auto it = m_csm_snapshot_future.m_map_con_sub_one.begin(); it != m_csm_snapshot_future.m_map_con_sub_one.end(); it++ ) {
+		if( it->second != nullptr ) {
+			delete it->second;
 		}
 	}
 	m_csm_snapshot_future.m_map_con_sub_one.clear();
 
-	std::list<ConSubOne*>::iterator it_osc_l;
-	for( it_osc_l = m_csm_snapshot_future.m_list_one_sub_con_del.begin(); it_osc_l != m_csm_snapshot_future.m_list_one_sub_con_del.end(); it_osc_l++ ) {
-		if( (*it_osc_l) != nullptr ) {
-			delete (*it_osc_l);
+	for( auto it = m_csm_snapshot_future.m_list_one_sub_con_del.begin(); it != m_csm_snapshot_future.m_list_one_sub_con_del.end(); it++ ) {
+		if( (*it) != nullptr ) {
+			delete (*it);
 		}
 	}
 	m_csm_snapshot_future.m_list_one_sub_con_del.clear();
@@ -108,61 +106,61 @@ bool QuoterCTP_P::ReadConfig( std::string file_path )
 		return false;
 	}
 
-	pugi::xml_node xmlPluginNode = document.document_element();
-	if( xmlPluginNode.empty() ) {
+	pugi::xml_node node_plugin = document.document_element();
+	if( node_plugin.empty() ) {
 		log_info = "获取插件参数配置信息 根节点 失败！";
 		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 		return false;
 	}
 	
-	m_configs.m_address = xmlPluginNode.child_value( "Address" );
-	m_configs.m_strbroker_id = xmlPluginNode.child_value( "BrokerID" );
-	m_configs.m_username = xmlPluginNode.child_value( "Username" );
-	m_configs.m_password = xmlPluginNode.child_value( "Password" );
-	m_configs.m_sub_list_from = xmlPluginNode.child_value( "SubListFrom" );
+	m_configs.m_address = node_plugin.child_value( "Address" );
+	m_configs.m_strbroker_id = node_plugin.child_value( "BrokerID" );
+	m_configs.m_username = node_plugin.child_value( "Username" );
+	m_configs.m_password = node_plugin.child_value( "Password" );
+	m_configs.m_sub_list_from = node_plugin.child_value( "SubListFrom" );
 
 	if( "USER" == m_configs.m_sub_list_from ) { // 从本地配置文件获取订阅合约列表
-		for( pugi::xml_node xmlPluginChildNode = xmlPluginNode.first_child(); !xmlPluginChildNode.empty(); xmlPluginChildNode = xmlPluginChildNode.next_sibling() ) {
-			if( "SubList" == std::string( xmlPluginChildNode.name() ) ) {
-				std::string strContract = xmlPluginChildNode.attribute( "Contract" ).value();
-				m_vec_contract.push_back( strContract );
-				FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0}", strContract );
+		for( pugi::xml_node child_node_plugin = node_plugin.first_child(); !child_node_plugin.empty(); child_node_plugin = child_node_plugin.next_sibling() ) {
+			if( "SubList" == std::string( child_node_plugin.name() ) ) {
+				std::string contract = child_node_plugin.attribute( "Contract" ).value();
+				m_vec_contract.push_back( contract );
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0}", contract );
 				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
 			}
 		}
 	}
 	else if( "JYDB" == m_configs.m_sub_list_from ) { // 从聚源数据库获取订阅合约列表
-		m_configs.m_name_odbc = xmlPluginNode.child_value( "NameODBC" );
-		m_configs.m_db_address = xmlPluginNode.child_value( "DB_Addr" );
-		m_configs.m_db_port = atoi( xmlPluginNode.child_value( "DB_Port" ) );
-		m_configs.m_db_username = xmlPluginNode.child_value( "DB_Username" );
-		m_configs.m_db_password = xmlPluginNode.child_value( "DB_Password" );
-		m_configs.m_db_database = xmlPluginNode.child_value( "DB_DataBase" );
+		m_configs.m_name_odbc = node_plugin.child_value( "NameODBC" );
+		m_configs.m_db_address = node_plugin.child_value( "DB_Addr" );
+		m_configs.m_db_port = atoi( node_plugin.child_value( "DB_Port" ) );
+		m_configs.m_db_username = node_plugin.child_value( "DB_Username" );
+		m_configs.m_db_password = node_plugin.child_value( "DB_Password" );
+		m_configs.m_db_database = node_plugin.child_value( "DB_DataBase" );
 	}
 	else if( "CTP" == m_configs.m_sub_list_from ) { // 从上期平台获取订阅合约列表
-		m_configs.m_qc_address = xmlPluginNode.child_value( "QC_Address" );
-		m_configs.m_qc_broker_id = xmlPluginNode.child_value( "QC_BrokerID" );
-		m_configs.m_qc_username = xmlPluginNode.child_value( "QC_Username" );
-		m_configs.m_qc_password = xmlPluginNode.child_value( "QC_Password" );
+		m_configs.m_qc_address = node_plugin.child_value( "QC_Address" );
+		m_configs.m_qc_broker_id = node_plugin.child_value( "QC_BrokerID" );
+		m_configs.m_qc_username = node_plugin.child_value( "QC_Username" );
+		m_configs.m_qc_password = node_plugin.child_value( "QC_Password" );
 	}
 
 	// 托管时保护账户信息
 	if( "0" == m_configs.m_username ) {
-		//m_configs.m_username = "88870001"; // 光大期货：
-		//m_configs.m_password = "17260317"; // 光大期货：
+		//m_configs.m_username = "88870001";
+		//m_configs.m_password = "17260317";
 	}
 	if( "0" == m_configs.m_qc_username ) {
-		//m_configs.m_qc_username = "88870001"; // 光大期货：
-		//m_configs.m_qc_password = "17260317"; // 光大期货：
+		//m_configs.m_qc_username = "88870001";
+		//m_configs.m_qc_password = "17260317";
 	}
 
-	m_configs.m_need_dump = atoi( xmlPluginNode.child_value( "NeedDump" ) );
-	m_configs.m_dump_path = xmlPluginNode.child_value( "DumpPath" );
-	m_configs.m_data_compress = atoi( xmlPluginNode.child_value( "DataCompress" ) );
-	m_configs.m_data_encode = atoi( xmlPluginNode.child_value( "DataEncode" ) );
-	m_configs.m_dump_time = atoi( xmlPluginNode.child_value( "DumpTime" ) );
-	m_configs.m_init_time = atoi( xmlPluginNode.child_value( "InitTime" ) );
-	m_configs.m_night_time = atoi( xmlPluginNode.child_value( "NightTime" ) );
+	m_configs.m_need_dump = atoi( node_plugin.child_value( "NeedDump" ) );
+	m_configs.m_dump_path = node_plugin.child_value( "DumpPath" );
+	m_configs.m_data_compress = atoi( node_plugin.child_value( "DataCompress" ) );
+	m_configs.m_data_encode = atoi( node_plugin.child_value( "DataEncode" ) );
+	m_configs.m_dump_time = atoi( node_plugin.child_value( "DumpTime" ) );
+	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
+	m_configs.m_night_time = atoi( node_plugin.child_value( "NightTime" ) );
 
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6} {7}", m_configs.m_address, m_configs.m_strbroker_id, m_configs.m_username, m_configs.m_password, 
 	//	m_configs.m_sub_list_from, m_configs.m_dump_time, m_configs.m_init_time, m_configs.m_night_time );
@@ -198,9 +196,8 @@ bool QuoterCTP_P::InitializeExt() {
 
 bool QuoterCTP_P::StartPlugin() {
 	std::string log_info;
-	try {
-		std::string strInitInfo;
 
+	try {
 		log_info = "开始启用插件 ....";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
@@ -234,9 +231,8 @@ bool QuoterCTP_P::IsPluginRun() {
 
 bool QuoterCTP_P::StopPlugin() {
 	std::string log_info;
-	try {
-		std::string strInitInfo;
 
+	try {
 		log_info = "开始停止插件 ....";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
@@ -273,17 +269,17 @@ bool QuoterCTP_P::Uninitialize() {
 bool QuoterCTP_P::AssignTask( int32_t task_id, int32_t identity, int32_t code, std::string& data ) {
 	try {
 		m_task_list_lock.lock();
-		bool bWriteInProgress = !m_list_task.empty();
-		TaskItem TaskItemTemp;
-		m_list_task.push_back( TaskItemTemp );
-		TaskItem& TaskItemRef = m_list_task.back();
-		TaskItemRef.m_task_id = task_id;
-		TaskItemRef.m_identity = identity;
-		TaskItemRef.m_code = code;
-		TaskItemRef.m_data = data;
+		bool write_in_progress = !m_list_task.empty();
+		TaskItem task_item_temp;
+		m_list_task.push_back( task_item_temp );
+		TaskItem& task_item_ref = m_list_task.back();
+		task_item_ref.m_task_id = task_id;
+		task_item_ref.m_identity = identity;
+		task_item_ref.m_code = code;
+		task_item_ref.m_data = data;
 		m_task_list_lock.unlock();
 		
-		if( !bWriteInProgress && true == m_service_running ) {
+		if( !write_in_progress && true == m_service_running ) {
 			m_service->post( boost::bind( &QuoterCTP_P::HandleTaskMsg, this ) );
 		}
 
@@ -308,16 +304,16 @@ void QuoterCTP_P::CreateService()
 	try {
 		try {
 			m_service = boost::make_shared<boost::asio::io_service>();
-			boost::asio::io_service::work Work( *m_service );
+			boost::asio::io_service::work work( *m_service );
 
-			for( int i = 0; i < m_work_thread_number; i++ ) {
-				thread_ptr pThread( new boost::thread( boost::bind( &boost::asio::io_service::run, m_service ) ) );
-				m_vec_work_thread.push_back( pThread );
+			for( size_t i = 0; i < (size_t)m_work_thread_number; i++ ) {
+				thread_ptr thread_service( new boost::thread( boost::bind( &boost::asio::io_service::run, m_service ) ) );
+				m_vec_work_thread.push_back( thread_service );
 			}
 
 			m_service_running = true;
 
-			for( int i = 0; i < (int)m_vec_work_thread.size(); i++ ) { // 等待所有线程退出
+			for( size_t i = 0; i < m_vec_work_thread.size(); i++ ) { // 等待所有线程退出
 				m_vec_work_thread[i]->join();
 			}
 		}
@@ -344,79 +340,79 @@ void QuoterCTP_P::HandleTaskMsg() {
 	std::string log_info;
 
 	try {
-		std::string strResultData;
-		TaskItem* pTaskItem = &m_list_task.front(); // 肯定有
+		std::string result_data;
+		TaskItem* task_item = &m_list_task.front(); // 肯定有
 
-		//FormatLibrary::StandardLibrary::FormatTo( log_info, "开始处理 {0} 号任务 ...", pTaskItem->m_task_id );
+		//FormatLibrary::StandardLibrary::FormatTo( log_info, "开始处理 {0} 号任务 ...", task_item->m_task_id );
 		//LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 		try {
-			Request RequestTemp;
-			RequestTemp.m_task_id = pTaskItem->m_task_id;
-			RequestTemp.m_identity = pTaskItem->m_identity;
-			RequestTemp.m_code = pTaskItem->m_code;
+			Request request_temp;
+			request_temp.m_task_id = task_item->m_task_id;
+			request_temp.m_identity = task_item->m_identity;
+			request_temp.m_code = task_item->m_code;
 
-			int function = 0;
-			if( NW_MSG_CODE_JSON == pTaskItem->m_code ) {
-				if( m_json_reader.parse( pTaskItem->m_data, RequestTemp.m_req_json, false ) ) { // 含中文：std::string strUser = StringToGB2312( jsRootR["user"].asString() );
-					function = RequestTemp.m_req_json["function"].asInt();
+			int32_t ret_func = 0;
+			if( NW_MSG_CODE_JSON == task_item->m_code ) {
+				if( m_json_reader.parse( task_item->m_data, request_temp.m_req_json, false ) ) { // 含中文：std::string strUser = StringToGB2312( jsRootR["user"].asString() );
+					ret_func = request_temp.m_req_json["function"].asInt();
 				}
 				else {
-					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据 JSON 解析失败！", pTaskItem->m_task_id );
-					strResultData = OnErrorResult( function, -1, log_info, pTaskItem->m_code );
+					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据 JSON 解析失败！", task_item->m_task_id );
+					result_data = OnErrorResult( ret_func, -1, log_info, task_item->m_code );
 				}
 			}
 			else {
-				FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据编码格式异常！", pTaskItem->m_task_id );
-				pTaskItem->m_code = NW_MSG_CODE_JSON; // 编码格式未知时默认使用
-				strResultData = OnErrorResult( function, -1, log_info, pTaskItem->m_code );
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据编码格式异常！", task_item->m_task_id );
+				task_item->m_code = NW_MSG_CODE_JSON; // 编码格式未知时默认使用
+				result_data = OnErrorResult( ret_func, -1, log_info, task_item->m_code );
 			}
 
-			if( function > 0 ) {
-				switch( function ) {
+			if( ret_func > 0 ) {
+				switch( ret_func ) {
 				case TD_FUNC_QUOTE_ADDSUB: // 订阅行情
 					m_user_request_list_lock.lock();
-					m_list_user_request.push_back( RequestTemp );
+					m_list_user_request.push_back( request_temp );
 					m_user_request_list_lock.unlock();
 					break;
 				case TD_FUNC_QUOTE_DELSUB: // 退订行情
 					m_user_request_list_lock.lock();
-					m_list_user_request.push_back( RequestTemp );
+					m_list_user_request.push_back( request_temp );
 					m_user_request_list_lock.unlock();
 					break;
 				default: // 会话自处理请求
-					if( "" == strResultData ) { // 避免 strResultData 覆盖
-						FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时功能编号未知！function：{1}", pTaskItem->m_task_id, function );
-						strResultData = OnErrorResult( function, -1, log_info, RequestTemp.m_code );
+					if( "" == result_data ) { // 避免 result_data 覆盖
+						FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时功能编号未知！function：{1}", task_item->m_task_id, ret_func );
+						result_data = OnErrorResult( ret_func, -1, log_info, request_temp.m_code );
 					}
 				}
 			}
 			else {
-				if( "" == strResultData ) { // 避免 strResultData 覆盖
-					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时功能编号异常！function：{1}", pTaskItem->m_task_id, function );
-					strResultData = OnErrorResult( function, -1, log_info, RequestTemp.m_code );
+				if( "" == result_data ) { // 避免 result_data 覆盖
+					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时功能编号异常！function：{1}", task_item->m_task_id, ret_func );
+					result_data = OnErrorResult( ret_func, -1, log_info, request_temp.m_code );
 				}
 			}
 		}
 		catch( ... ) {
-			FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时发生错误，可能编码格式异常！", pTaskItem->m_task_id );
-			pTaskItem->m_code = NW_MSG_CODE_JSON; // 编码格式未知时默认使用
-			strResultData = OnErrorResult( 0, -1, log_info, pTaskItem->m_code );
+			FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时发生错误，可能编码格式异常！", task_item->m_task_id );
+			task_item->m_code = NW_MSG_CODE_JSON; // 编码格式未知时默认使用
+			result_data = OnErrorResult( 0, -1, log_info, task_item->m_code );
 		}
 
-		if( strResultData != "" ) { // 在任务转发前就发生错误了
-			CommitResult( pTaskItem->m_task_id, pTaskItem->m_identity, pTaskItem->m_code, strResultData );
+		if( result_data != "" ) { // 在任务转发前就发生错误了
+			CommitResult( task_item->m_task_id, task_item->m_identity, task_item->m_code, result_data );
 		}
 
-		FormatLibrary::StandardLibrary::FormatTo( log_info, "处理 {0} 号任务完成。", pTaskItem->m_task_id );
+		FormatLibrary::StandardLibrary::FormatTo( log_info, "处理 {0} 号任务完成。", task_item->m_task_id );
 		//LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 		m_task_list_lock.lock();
 		m_list_task.pop_front();
-		bool bWriteOnProgress = !m_list_task.empty();
+		bool write_on_progress = !m_list_task.empty();
 		m_task_list_lock.unlock();
 
-		if( bWriteOnProgress && true == m_service_running ) {
+		if( write_on_progress && true == m_service_running ) {
 			m_service->post( boost::bind( &QuoterCTP_P::HandleTaskMsg, this ) );
 		}
 	}
@@ -446,60 +442,60 @@ void QuoterCTP_P::OnTimer() {
 		if( CreateDumpFolder() ) { // 含首次开启时文件创建
 			m_thread_init_api_spi = boost::make_shared<boost::thread>( boost::bind( &QuoterCTP_P::InitApiSpi, this ) );
 
-			bool bForceDump = false; // 避免瞬间多次调用 Dump 操作
-			bool bDoReSubscribe = false;
-			bool bDoReSubscribeNight = false;
-			bool bInitQuoteDataFile = false;
+			bool force_dump = false; // 避免瞬间多次调用 Dump 操作
+			bool do_resubscribe = false;
+			bool do_resubscribe_night = false;
+			bool init_quote_data_file = false;
 			while( true ) {
-				for( int i = 0; i < m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
+				for( size_t i = 0; i < (size_t)m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
 					Sleep( 1000 );
 					//if( 前置行情服务器启动 )
 					//{
 					//	DumpSnapshotFuture();
-					//	bForceDump = true;
+					//	force_dump = true;
 					//}
 				}
-				if( false == bForceDump ) {
+				if( false == force_dump ) {
 					DumpSnapshotFuture();
 				}
-				bForceDump = false;
+				force_dump = false;
 
-				tm tmNowTime = basicx::GetNowTime();
-				int nNowTime = tmNowTime.tm_hour * 100 + tmNowTime.tm_min;
+				tm now_time_t = basicx::GetNowTime();
+				int32_t now_time = now_time_t.tm_hour * 100 + now_time_t.tm_min;
 
-				char cTimeTemp[32];
-				strftime( cTimeTemp, 32, "%H%M%S", &tmNowTime);
+				char time_temp[32];
+				strftime( time_temp, 32, "%H%M%S", &now_time_t);
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} SnapshotFuture：R:{1}，W:{2}，C:{3}，S:{4}。", 
-					cTimeTemp, m_cache_snapshot_future.m_recv_num.load(), m_cache_snapshot_future.m_dump_num.load(), m_cache_snapshot_future.m_comp_num.load(), m_cache_snapshot_future.m_send_num.load() );
+					time_temp, m_cache_snapshot_future.m_recv_num.load(), m_cache_snapshot_future.m_dump_num.load(), m_cache_snapshot_future.m_comp_num.load(), m_cache_snapshot_future.m_send_num.load() );
 				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 				m_cache_snapshot_future.m_dump_num = 0;
 				m_cache_snapshot_future.m_comp_num = 0;
 				m_cache_snapshot_future.m_send_num = 0;
 
-				if( nNowTime == m_configs.m_init_time && false == bDoReSubscribe ) {
+				if( now_time == m_configs.m_init_time && false == do_resubscribe ) {
 					DoReSubscribe();
-					bDoReSubscribe = true;
+					do_resubscribe = true;
 				}
 
-				if( nNowTime == m_configs.m_night_time && false == bDoReSubscribeNight ) {
+				if( now_time == m_configs.m_night_time && false == do_resubscribe_night ) {
 					DoReSubscribe();
-					bDoReSubscribeNight = true;
+					do_resubscribe_night = true;
 				}
 
-				if( 600 == nNowTime && false == bInitQuoteDataFile ) {
+				if( 600 == now_time && false == init_quote_data_file ) {
 					InitQuoteDataFile();
-					bInitQuoteDataFile = true;
+					init_quote_data_file = true;
 
 					ClearUnavailableConSub( m_csm_snapshot_future, true );
 					log_info = "清理无效订阅。";
 					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 				}
 
-				if( 500 == nNowTime ) {
-					bDoReSubscribe = false;
-					bDoReSubscribeNight = false;
-					bInitQuoteDataFile = false;
+				if( 500 == now_time ) {
+					do_resubscribe = false;
+					do_resubscribe_night = false;
+					init_quote_data_file = false;
 				}
 			}
 		}
@@ -543,28 +539,23 @@ void QuoterCTP_P::DoReSubscribe() {
 bool QuoterCTP_P::CreateDumpFolder() {
 	std::string log_info;
 
-	std::string strDumpDataFolderPath = m_configs.m_dump_path;
-	basicx::StringRightTrim( strDumpDataFolderPath, std::string( "\\" ) );
+	std::string dump_data_folder_path = m_configs.m_dump_path;
+	basicx::StringRightTrim( dump_data_folder_path, std::string( "\\" ) );
 
-	int32_t number = MultiByteToWideChar( 0, 0, strDumpDataFolderPath.c_str(), -1, NULL, 0 );
-	wchar_t* temp_dump_data_folder_path = new wchar_t[number];
-	MultiByteToWideChar( 0, 0, strDumpDataFolderPath.c_str(), -1, temp_dump_data_folder_path, number );
-	std::wstring w_dump_data_folder_path = temp_dump_data_folder_path;
-	delete[] temp_dump_data_folder_path;
-	WIN32_FIND_DATA FindDumpFolder;
-	HANDLE hDumpFolder = FindFirstFile( w_dump_data_folder_path.c_str(), &FindDumpFolder );
-	if( INVALID_HANDLE_VALUE == hDumpFolder ) {
-		FindClose( hDumpFolder );
-		FormatLibrary::StandardLibrary::FormatTo( log_info, "实时行情数据存储文件夹不存在！{0}", strDumpDataFolderPath );
+	WIN32_FIND_DATA find_dump_folder;
+	HANDLE handle_dump_folder = FindFirstFile( basicx::StringToWideChar( dump_data_folder_path ).c_str(), &find_dump_folder );
+	if( INVALID_HANDLE_VALUE == handle_dump_folder ) {
+		FindClose( handle_dump_folder );
+		FormatLibrary::StandardLibrary::FormatTo( log_info, "实时行情数据存储文件夹不存在！{0}", dump_data_folder_path );
 		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 		return false;
 	}
-	FindClose( hDumpFolder );
+	FindClose( handle_dump_folder );
 
-	strDumpDataFolderPath += "\\Future";
-	CreateDirectoryA( strDumpDataFolderPath.c_str(), NULL );
+	dump_data_folder_path += "\\Future";
+	CreateDirectoryA( dump_data_folder_path.c_str(), NULL );
 
-	m_cache_snapshot_future.m_folder_path = strDumpDataFolderPath + "\\Market";
+	m_cache_snapshot_future.m_folder_path = dump_data_folder_path + "\\Market";
 	CreateDirectoryA( m_cache_snapshot_future.m_folder_path.c_str(), NULL );
 
 	InitQuoteDataFile(); // 首次启动时
@@ -573,32 +564,27 @@ bool QuoterCTP_P::CreateDumpFolder() {
 }
 
 void QuoterCTP_P::InitQuoteDataFile() {
-	char cDateTemp[9];
-	tm tmNowTime = basicx::GetNowTime();
-	strftime( cDateTemp, 9, "%Y%m%d", &tmNowTime);
-	FormatLibrary::StandardLibrary::FormatTo( m_cache_snapshot_future.m_file_path, "{0}\\{1}.hq", m_cache_snapshot_future.m_folder_path, cDateTemp );
+	char date_temp[9];
+	tm now_time_t = basicx::GetNowTime();
+	strftime( date_temp, 9, "%Y%m%d", &now_time_t);
+	FormatLibrary::StandardLibrary::FormatTo( m_cache_snapshot_future.m_file_path, "{0}\\{1}.hq", m_cache_snapshot_future.m_folder_path, date_temp );
 
-	bool bIsNewFile = false;
-	int32_t number = MultiByteToWideChar( 0, 0, m_cache_snapshot_future.m_file_path.c_str(), -1, NULL, 0 );
-	wchar_t* temp_cache_file_path = new wchar_t[number];
-	MultiByteToWideChar( 0, 0, m_cache_snapshot_future.m_file_path.c_str(), -1, temp_cache_file_path, number );
-	std::wstring w_cache_file_path = temp_cache_file_path;
-	delete[] temp_cache_file_path;
-	WIN32_FIND_DATA FindFileTemp;
-	HANDLE hFindFile = FindFirstFile( w_cache_file_path.c_str(), &FindFileTemp );
-	if( INVALID_HANDLE_VALUE == hFindFile ) { // 数据文件不存在
-		bIsNewFile = true;
+	bool is_new_file = false;
+	WIN32_FIND_DATA find_file_temp;
+	HANDLE handle_find_file = FindFirstFile( basicx::StringToWideChar( m_cache_snapshot_future.m_file_path ).c_str(), &find_file_temp );
+	if( INVALID_HANDLE_VALUE == handle_find_file ) { // 数据文件不存在
+		is_new_file = true;
 	}
-	FindClose( hFindFile );
+	FindClose( handle_find_file );
 
-	if( true == bIsNewFile ) { // 创建并写入 32 字节文件头部
-		std::ofstream File_SnapshotFuture;
-		File_SnapshotFuture.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
-		if( File_SnapshotFuture ) {
-			char cHeadTemp[32] = { 0 };
-			cHeadTemp[0] = SNAPSHOT_FUTURE_VERSION; // 结构体版本
-			File_SnapshotFuture.write( cHeadTemp, 32 );
-			File_SnapshotFuture.close();
+	if( true == is_new_file ) { // 创建并写入 32 字节文件头部
+		std::ofstream file_snapshot_future;
+		file_snapshot_future.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
+		if( file_snapshot_future ) {
+			char head_temp[32] = { 0 };
+			head_temp[0] = SNAPSHOT_FUTURE_VERSION; // 结构体版本
+			file_snapshot_future.write( head_temp, 32 );
+			file_snapshot_future.close();
 		}
 		else {
 			std::string log_info;
@@ -647,14 +633,14 @@ void QuoterCTP_P::InitApiSpi() {
 	//if( true == m_subscribe_ok ) { // 退订行情
 	//	m_subscribe_ok = false;
 
-	//	int nContractNum = m_vec_contract.size();
-	//	char** ppcContract = new char*[nContractNum];
-	//	for( int i = 0; i < nContractNum; i++ ) {
-	//	    ppcContract[i] = const_cast<char*>(m_vec_contract[i].c_str());
+	//	size_t contract_number = m_vec_contract.size();
+	//	char** contract = new char*[contract_number];
+	//	for( size_t i = 0; i < contract_number; i++ ) {
+	//	    contract[i] = const_cast<char*>(m_vec_contract[i].c_str());
 	//	}
 
-	//	int nRet = m_user_api->UnSubscribeMarketData( ppcContract, nContractNum );
-	//	if( 0 == nRet ) {
+	//	int32_t result = m_user_api->UnSubscribeMarketData( contract, contract_number );
+	//	if( 0 == result ) {
 	//	    log_info = "发送行情 退订 请求成功。";
 	//	    LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 	//	}
@@ -663,7 +649,7 @@ void QuoterCTP_P::InitApiSpi() {
 	//	    LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 	//	}
 
-	//	delete [] ppcContract;
+	//	delete[] contract;
 	//}
 
 	//Sleep( 2500 ); // 等待退订反馈
@@ -694,10 +680,10 @@ void QuoterCTP_P::GetSubListFromDB() {
 					 and A.EffectiveDate <= CONVERT( VARCHAR( 10 ), GETDATE(), 120 ) \
 					 and A.LastTradingDate >= CONVERT( VARCHAR( 10 ), GETDATE(), 120 ) order by A.LastTradingDate", m_configs.m_db_database );
 
-	basicx::WinVer WindowsVersion;
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, WindowsVersion.GetVersion() ); // 打印同时取得版本信息
+	basicx::WinVer windows_version;
+	LogPrint( basicx::syslog_level::c_info, m_log_cate, windows_version.GetVersion() ); // 打印同时取得版本信息
 
-	if( true == WindowsVersion.m_is_win_nt6 ) { // 使用 ADO 连接
+	if( true == windows_version.m_is_win_nt6 ) { // 使用 ADO 连接
 		log_info = "使用 ADO 连接 聚源 数据库。";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
@@ -763,22 +749,22 @@ void QuoterCTP_P::GetSubListFromDB() {
 		log_info = "使用 OTL 连接 聚源 数据库。";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-		otl_connect otlConnect;
+		otl_connect connect_otl;
 		otl_connect::otl_initialize(); // 初始化 ODBC 环境
 
 		try {
-			std::string strLogon;
-			FormatLibrary::StandardLibrary::FormatTo( strLogon, "{0}/{1}@{2}", m_configs.m_db_username, m_configs.m_db_password, m_configs.m_name_odbc );
-			otlConnect.rlogon( strLogon.c_str() ); // 连接 ODBC
+			std::string logon;
+			FormatLibrary::StandardLibrary::FormatTo( logon, "{0}/{1}@{2}", m_configs.m_db_username, m_configs.m_db_password, m_configs.m_name_odbc );
+			connect_otl.rlogon( logon.c_str() ); // 连接 ODBC
 
-			otl_stream otlStream( 1, sql_query.c_str(), otlConnect );
+			otl_stream stream_otl( 1, sql_query.c_str(), connect_otl );
 			
-			int nRecordNum = 0;
-			while( !otlStream.eof() ) {
-				char cContractCode[8];
-				int exchange_code = 0;
-				otlStream>>cContractCode>>exchange_code; // 10-上海期货交易所，13-大连商品交易所，15-郑州商品交易所，20-中国金融期货交易所
-				std::string contract_code = cContractCode;
+			int32_t record_number = 0;
+			while( !stream_otl.eof() ) {
+				char contract_temp[8];
+				int32_t exchange_code = 0;
+				stream_otl >> contract_temp >> exchange_code; // 10-上海期货交易所，13-大连商品交易所，15-郑州商品交易所，20-中国金融期货交易所
+				std::string contract_code = contract_temp;
 				if( contract_code != "" ) {
 					// 查询所得均为大写
 					// 上期所和大商所品种代码需小写：10、13
@@ -790,10 +776,10 @@ void QuoterCTP_P::GetSubListFromDB() {
 					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, exchange_code );
 					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
 				}
-				nRecordNum++;
+				record_number++;
 			}
 
-			FormatLibrary::StandardLibrary::FormatTo( log_info, "查询获得合约代码记录 {0} {1} 条。", nRecordNum, m_vec_contract.size() );
+			FormatLibrary::StandardLibrary::FormatTo( log_info, "查询获得合约代码记录 {0} {1} 条。", record_number, m_vec_contract.size() );
 			LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 		}
 		catch( otl_exception& ex ) {
@@ -802,7 +788,7 @@ void QuoterCTP_P::GetSubListFromDB() {
 			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 		}
 
-		otlConnect.logoff(); // 断开 ODBC 连接
+		connect_otl.logoff(); // 断开 ODBC 连接
 	}
 
 	log_info = "从 数据库 获取合约代码完成。";
@@ -814,29 +800,29 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 
 	m_vec_contract.clear(); // 如果查询失败，则会导致当日无合约行情可订阅
 
-	int nRet = 0;
+	int32_t result = 0;
 	CThostFtdcTraderApi* user_api = nullptr;
-	CThostFtdcTraderSpiImpl* pUserSpi = nullptr;
+	CThostFtdcTraderSpiImpl* user_spi = nullptr;
 	try {
 		log_info = "开始初始化 合约查询 接口 ....";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 		std::string flow_path = m_syscfg->GetPath_ExtFolder() + "\\";
 		user_api = CThostFtdcTraderApi::CreateFtdcTraderApi( flow_path.c_str() );
-		pUserSpi = new CThostFtdcTraderSpiImpl( user_api, this );
-		user_api->RegisterSpi( pUserSpi );
+		user_spi = new CThostFtdcTraderSpiImpl( user_api, this );
+		user_api->RegisterSpi( user_spi );
 		user_api->RegisterFront( const_cast<char*>(m_configs.m_qc_address.c_str()) );
 		// 不需要订阅流消息
-		pUserSpi->m_connect_ok = false;
+		user_spi->m_connect_ok = false;
 		user_api->Init();
 		log_info = "初始化 合约查询 接口完成。等待连接响应 ....";
 		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-		int nTimeWait = 0;
-		while( false == pUserSpi->m_connect_ok && nTimeWait < 5000 ) { // 最多等待 5 秒
+		int32_t time_wait = 0;
+		while( false == user_spi->m_connect_ok && time_wait < 5000 ) { // 最多等待 5 秒
 			Sleep( 100 );
-			nTimeWait += 100;
+			time_wait += 100;
 		}
-		if( false == pUserSpi->m_connect_ok ) {
+		if( false == user_spi->m_connect_ok ) {
 			log_info = "交易前置 连接超时！";
 			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 		}
@@ -845,27 +831,27 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 			LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 			// 登录操作
-			nRet = pUserSpi->ReqUserLogin( m_configs.m_qc_broker_id, m_configs.m_qc_username, m_configs.m_qc_password );
-			if( nRet != 0 ) { // -1、-2、-3
-				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录请求失败！{0}", nRet );
+			result = user_spi->ReqUserLogin( m_configs.m_qc_broker_id, m_configs.m_qc_username, m_configs.m_qc_password );
+			if( result != 0 ) { // -1、-2、-3
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录请求失败！{0}", result );
 				LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 			}
 			else {
 				log_info = "用户登录 提交成功。";
 				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-				int nTimeWait = 0;
-				while( false == pUserSpi->m_login_ok && nTimeWait < 5000 ) { // 最多等待 5 秒
-					if( true == pUserSpi->m_last_rsp_is_error ) {
+				int32_t time_wait = 0;
+				while( false == user_spi->m_login_ok && time_wait < 5000 ) { // 最多等待 5 秒
+					if( true == user_spi->m_last_rsp_is_error ) {
 						break;
 					}
 					Sleep( 100 );
-					nTimeWait += 100;
+					time_wait += 100;
 				}
 			}
-			if( false == pUserSpi->m_login_ok ) {
-				std::string strErrorMsg = pUserSpi->GetLastErrorMsg();
-				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录失败！{0}", strErrorMsg );
+			if( false == user_spi->m_login_ok ) {
+				std::string error_msg = user_spi->GetLastErrorMsg();
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录失败！{0}", error_msg );
 				LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 			}
 			else {
@@ -873,22 +859,22 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 				// 查询操作
-				nRet = pUserSpi->ReqQryInstrument();
-				if( nRet != 0 ) { // -1、-2、-3
-					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约查询 提交失败！{0}", nRet );
+				result = user_spi->ReqQryInstrument();
+				if( result != 0 ) { // -1、-2、-3
+					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约查询 提交失败！{0}", result );
 					LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 				}
 				else {
 					log_info = "合约查询 提交成功。";
 					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-					int nTimeWait = 0;
-					while( false == pUserSpi->m_qry_instrument && nTimeWait < 5000 ) { // 最多等待 5 秒
+					int32_t time_wait = 0;
+					while( false == user_spi->m_qry_instrument && time_wait < 5000 ) { // 最多等待 5 秒
 						Sleep( 100 );
-						nTimeWait += 100;
+						time_wait += 100;
 					}
 				}
-				if( false == pUserSpi->m_qry_instrument ) {
+				if( false == user_spi->m_qry_instrument ) {
 					log_info = "合约查询超时！";
 					LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 				}
@@ -898,27 +884,27 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 				}
 
 				// 登出操作 // 可以不做，执行 ReqUserLogout 操作会显示会话断开和前置连接中断(00001001)，但如果不 Release 依然会发心跳消息
-				//nRet = pUserSpi->ReqUserLogout( m_configs.m_qc_broker_id, m_configs.m_qc_username );
-				//if( nRet != 0 ) { //-1、-2、-3
-				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出请求失败！{0}", nRet );
+				//result = user_spi->ReqUserLogout( m_configs.m_qc_broker_id, m_configs.m_qc_username );
+				//if( result != 0 ) { //-1、-2、-3
+				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出请求失败！{0}", result );
 				//	LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 				//}
 				//else {
 				//	log_info = "用户登出 提交成功。";
 				//	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-				//	int nTimeWait = 0;
-				//	while( false == pUserSpi->m_logout_ok && nTimeWait < 5000 ) { // 最多等待 5 秒
-				//		if( true == pUserSpi->m_last_rsp_is_error ) {
+				//	int32_t time_wait = 0;
+				//	while( false == user_spi->m_logout_ok && time_wait < 5000 ) { // 最多等待 5 秒
+				//		if( true == user_spi->m_last_rsp_is_error ) {
 				//		    break;
 				//	    }
 				//		Sleep( 100 );
-				//		nTimeWait += 100;
+				//		time_wait += 100;
 				//	}
 				//}
-				//if( false == pUserSpi->m_logout_ok ) {
-				//	std::string strErrorMsg = pUserSpi->GetLastErrorMsg();
-				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出失败！{0}", strErrorMsg );
+				//if( false == user_spi->m_logout_ok ) {
+				//	std::string error_msg = user_spi->GetLastErrorMsg();
+				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出失败！{0}", error_msg );
 				//	LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 				//}
 				//else {
@@ -938,8 +924,8 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 	if( user_api != nullptr ) {
 		user_api->Release();
 	} // 只有 Release 以后才会停止发送心跳消息，如果之前已执行 ReqUserLogout 操作，这里还会新建一次会话，之后再次显示会话断开和前置连接中断(00000000)
-	if( pUserSpi != nullptr ) {
-		delete pUserSpi;
+	if( user_spi != nullptr ) {
+		delete user_spi;
 	}
 
 	log_info = "从 上期平台 获取合约代码完成。";
@@ -949,25 +935,24 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 void QuoterCTP_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_temp ) {
 	//if( m_net_server_broad->Server_GetConnectCount() > 0 )
 	if( m_csm_snapshot_future.m_map_con_sub_all.size() > 0 || m_csm_snapshot_future.m_map_con_sub_one.size() > 0 ) { // 全市场和单证券可以分别压缩以减少CPU压力提高效率，但一般还是全市场订阅的多
-		int nOutputBufLenSnapshotFuture = m_output_buf_len_snapshot_future; // 必须每次重新赋值，否则压缩出错
+		int32_t output_buf_len_snapshot_future = m_output_buf_len_snapshot_future; // 必须每次重新赋值，否则压缩出错
 		memset( m_output_buf_snapshot_future, 0, m_output_buf_len_snapshot_future );
-		int nRet = gzCompress( (unsigned char*)&snapshot_future_temp, sizeof( snapshot_future_temp ), m_output_buf_snapshot_future, (uLongf*)&nOutputBufLenSnapshotFuture, m_data_compress );
-		if( Z_OK == nRet ) { // 数据已压缩
+		int32_t result = gzCompress( (unsigned char*)&snapshot_future_temp, sizeof( snapshot_future_temp ), m_output_buf_snapshot_future, (uLongf*)&output_buf_len_snapshot_future, m_data_compress );
+		if( Z_OK == result ) { // 数据已压缩
 			m_cache_snapshot_future.m_comp_num++;
-			std::string strQuoteData( (char*)m_output_buf_snapshot_future, nOutputBufLenSnapshotFuture );
-			strQuoteData = TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP_HEAD + strQuoteData;
+			std::string quote_data( (char*)m_output_buf_snapshot_future, output_buf_len_snapshot_future );
+			quote_data = TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP_HEAD + quote_data;
 
 			// 先给全市场的吧，全市场订阅者可能还要自己进行过滤
 
 			{ // 广播给全市场订阅者
 				m_csm_snapshot_future.m_lock_con_sub_all.lock();
-				std::map<int32_t, basicx::ConnectInfo*> mapConSub_All = m_csm_snapshot_future.m_map_con_sub_all;
+				std::map<int32_t, basicx::ConnectInfo*> map_con_sub_all = m_csm_snapshot_future.m_map_con_sub_all;
 				m_csm_snapshot_future.m_lock_con_sub_all.unlock();
 
-				std::map<int32_t, basicx::ConnectInfo*>::iterator itCSA;
-				for( itCSA = mapConSub_All.begin(); itCSA != mapConSub_All.end(); itCSA++ ) {
-					if( true == m_net_server_broad->IsConnectAvailable( itCSA->second ) ) {
-						m_net_server_broad->Server_SendData( itCSA->second, NW_MSG_TYPE_USER_DATA, m_data_encode, strQuoteData );
+				for( auto it = map_con_sub_all.begin(); it != map_con_sub_all.end(); it++ ) {
+					if( true == m_net_server_broad->IsConnectAvailable( it->second ) ) {
+						m_net_server_broad->Server_SendData( it->second, NW_MSG_TYPE_USER_DATA, m_data_encode, quote_data );
 						m_cache_snapshot_future.m_send_num++;
 					}
 				}
@@ -975,22 +960,20 @@ void QuoterCTP_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_tem
 
 			{ // 广播给单证券订阅者
 				m_csm_snapshot_future.m_lock_con_sub_one.lock();
-				std::map<std::string, ConSubOne*> mapConSub_One = m_csm_snapshot_future.m_map_con_sub_one;
+				std::map<std::string, ConSubOne*> map_con_sub_one = m_csm_snapshot_future.m_map_con_sub_one;
 				m_csm_snapshot_future.m_lock_con_sub_one.unlock();
 
-				std::map<std::string, ConSubOne*>::iterator itCSO;
-				itCSO = mapConSub_One.find( snapshot_future_temp.m_code );
-				if( itCSO != mapConSub_One.end() ) {
-					ConSubOne* pOneSubCon = itCSO->second; // 运行期间 pOneSubCon 所指对象不会被删除
+				std::map<std::string, ConSubOne*>::iterator it_cso = map_con_sub_one.find( snapshot_future_temp.m_code );
+				if( it_cso != map_con_sub_one.end() ) {
+					ConSubOne* con_sub_one = it_cso->second; // 运行期间 con_sub_one 所指对象不会被删除
 
-					pOneSubCon->m_lock_con_sub_one.lock();
-					std::map<int32_t, basicx::ConnectInfo*> mapIdentity = pOneSubCon->m_map_identity;
-					pOneSubCon->m_lock_con_sub_one.unlock();
+					con_sub_one->m_lock_con_sub_one.lock();
+					std::map<int32_t, basicx::ConnectInfo*> map_identity = con_sub_one->m_map_identity;
+					con_sub_one->m_lock_con_sub_one.unlock();
 
-					std::map<int32_t, basicx::ConnectInfo*>::iterator itID;
-					for( itID = mapIdentity.begin(); itID != mapIdentity.end(); itID++ ) {
-						if( true == m_net_server_broad->IsConnectAvailable( itID->second ) ) {
-							m_net_server_broad->Server_SendData( itID->second, NW_MSG_TYPE_USER_DATA, m_data_encode, strQuoteData );
+					for( auto it = map_identity.begin(); it != map_identity.end(); it++ ) {
+						if( true == m_net_server_broad->IsConnectAvailable( it->second ) ) {
+							m_net_server_broad->Server_SendData( it->second, NW_MSG_TYPE_USER_DATA, m_data_encode, quote_data );
 							m_cache_snapshot_future.m_send_num++;
 						}
 					}
@@ -1022,16 +1005,16 @@ void QuoterCTP_P::DumpSnapshotFuture() {
 	}
 	m_cache_snapshot_future.m_lock_cache.unlock();
 
-	int nOutDataNum = m_cache_snapshot_future.m_vec_cache_out->size();
-	if( nOutDataNum > 0 ) { // 避免无新数据时操作文件
-		std::ofstream File_SnapshotFuture;
-		File_SnapshotFuture.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
-		if( File_SnapshotFuture ) {
-			for( int i = 0; i < nOutDataNum; ++i ) {
-				File_SnapshotFuture.write( (const char*)(&(*m_cache_snapshot_future.m_vec_cache_out)[i]), sizeof( SnapshotFuture ) );
+	size_t out_data_number = m_cache_snapshot_future.m_vec_cache_out->size();
+	if( out_data_number > 0 ) { // 避免无新数据时操作文件
+		std::ofstream file_snapshot_future;
+		file_snapshot_future.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
+		if( file_snapshot_future ) {
+			for( size_t i = 0; i < out_data_number; ++i ) {
+				file_snapshot_future.write( (const char*)(&(*m_cache_snapshot_future.m_vec_cache_out)[i]), sizeof( SnapshotFuture ) );
 			}
-			File_SnapshotFuture.close(); // 已含 flush() 动作
-			m_cache_snapshot_future.m_dump_num += nOutDataNum;
+			file_snapshot_future.close(); // 已含 flush() 动作
+			m_cache_snapshot_future.m_dump_num += out_data_number;
 		}
 		else {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotFuture：打开转储文件失败！{0}", m_cache_snapshot_future.m_file_path );
@@ -1053,16 +1036,16 @@ void QuoterCTP_P::StartNetServer() {
 	m_net_server_query = boost::make_shared<basicx::NetServer>();
 	m_net_server_broad->ComponentInstance( this );
 	m_net_server_query->ComponentInstance( this );
-	basicx::NetServerCfg NetServerCfgTemp;
-	NetServerCfgTemp.m_log_test = cfg_basic->m_debug_infos_server;
-	NetServerCfgTemp.m_heart_check_time = cfg_basic->m_heart_check_server;
-	NetServerCfgTemp.m_max_msg_cache_number = cfg_basic->m_max_msg_cache_server;
-	NetServerCfgTemp.m_io_work_thread_number = cfg_basic->m_work_thread_server;
-	NetServerCfgTemp.m_client_connect_timeout = cfg_basic->m_con_time_out_server;
-	NetServerCfgTemp.m_max_connect_total_s = cfg_basic->m_con_max_server_server;
-	NetServerCfgTemp.m_max_data_length_s = cfg_basic->m_data_length_server;
-	m_net_server_broad->StartNetwork( NetServerCfgTemp );
-	m_net_server_query->StartNetwork( NetServerCfgTemp );
+	basicx::NetServerCfg net_server_cfg_temp;
+	net_server_cfg_temp.m_log_test = cfg_basic->m_debug_infos_server;
+	net_server_cfg_temp.m_heart_check_time = cfg_basic->m_heart_check_server;
+	net_server_cfg_temp.m_max_msg_cache_number = cfg_basic->m_max_msg_cache_server;
+	net_server_cfg_temp.m_io_work_thread_number = cfg_basic->m_work_thread_server;
+	net_server_cfg_temp.m_client_connect_timeout = cfg_basic->m_con_time_out_server;
+	net_server_cfg_temp.m_max_connect_total_s = cfg_basic->m_con_max_server_server;
+	net_server_cfg_temp.m_max_data_length_s = cfg_basic->m_data_length_server;
+	m_net_server_broad->StartNetwork( net_server_cfg_temp );
+	m_net_server_query->StartNetwork( net_server_cfg_temp );
 
 	for( size_t i = 0; i < cfg_basic->m_vec_server_server.size(); i++ ) {
 		if( "broad_ctp" == cfg_basic->m_vec_server_server[i].m_type && 1 == cfg_basic->m_vec_server_server[i].m_work ) {
@@ -1085,10 +1068,10 @@ void QuoterCTP_P::OnNetServerData( basicx::NetServerData& net_server_data_temp )
 		}
 		m_task_id++;
 
-		if( "BroadCTP" == net_server_data_temp.m_node_type ) { // 1 // 节点类型必须和配置文件一致
+		if( "broad_ctp" == net_server_data_temp.m_node_type ) { // 1 // 节点类型必须和配置文件一致
 			AssignTask( m_task_id * 10 + 1, net_server_data_temp.m_identity, net_server_data_temp.m_code, net_server_data_temp.m_data ); // 1
 		}
-		else if( "QueryCTP" == net_server_data_temp.m_node_type ) { // 2 // 节点类型必须和配置文件一致
+		else if( "query_ctp" == net_server_data_temp.m_node_type ) { // 2 // 节点类型必须和配置文件一致
 			AssignTask( m_task_id * 10 + 2, net_server_data_temp.m_identity, net_server_data_temp.m_code, net_server_data_temp.m_data ); // 2
 		}
 	}
@@ -1099,7 +1082,7 @@ void QuoterCTP_P::OnNetServerData( basicx::NetServerData& net_server_data_temp )
 }
 
 int32_t QuoterCTP_P::gzCompress( Bytef* data_in, uLong size_in, Bytef* data_out, uLong* size_out, int32_t level ) {
-	int err = 0;
+	int32_t err = 0;
 	z_stream c_stream;
 
 	if( data_in && size_in > 0 ) {
@@ -1157,31 +1140,31 @@ void QuoterCTP_P::HandleUserRequest() {
 	try {
 		while( 1 ) {
 			if( !m_list_user_request.empty() ) {
-				std::string strResultData = "";
-				Request* pRequest = &m_list_user_request.front();
+				std::string result_data = "";
+				Request* request = &m_list_user_request.front();
 
 				try {
-					int function = 0;
-					if( NW_MSG_CODE_JSON == pRequest->m_code ) {
-						function = pRequest->m_req_json["function"].asInt();
+					int32_t ret_func = 0;
+					if( NW_MSG_CODE_JSON == request->m_code ) {
+						ret_func = request->m_req_json["function"].asInt();
 					}
 
 					// 只可能为 TD_FUNC_QUOTE_ADDSUB、TD_FUNC_QUOTE_DELSUB、
-					switch( function ) {
+					switch( ret_func ) {
 					case TD_FUNC_QUOTE_ADDSUB: // 订阅行情
-						strResultData = OnUserAddSub( pRequest );
+						result_data = OnUserAddSub( request );
 						break;
 					case TD_FUNC_QUOTE_DELSUB: // 退订行情
-						strResultData = OnUserDelSub( pRequest );
+						result_data = OnUserDelSub( request );
 						break;
 					}
 				}
 				catch( ... ) {
-					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 用户请求时发生未知错误！", pRequest->m_task_id );
-					strResultData = OnErrorResult( 0, -1, log_info, pRequest->m_code );
+					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 用户请求时发生未知错误！", request->m_task_id );
+					result_data = OnErrorResult( 0, -1, log_info, request->m_code );
 				}
 
-				CommitResult( pRequest->m_task_id, pRequest->m_identity, pRequest->m_code, strResultData );
+				CommitResult( request->m_task_id, request->m_identity, request->m_code, result_data );
 
 				m_user_request_list_lock.lock();
 				m_list_user_request.pop_front();
@@ -1203,13 +1186,13 @@ void QuoterCTP_P::HandleUserRequest() {
 std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 	std::string log_info;
 
-	int nQuoteType = 0;
-	std::string strQuoteList = "";
+	int32_t quote_type = 0;
+	std::string quote_list = "";
 	if( NW_MSG_CODE_JSON == request->m_code ) {
-		nQuoteType = request->m_req_json["quote_type"].asInt();
-		strQuoteList = request->m_req_json["quote_list"].asString();
+		quote_type = request->m_req_json["quote_type"].asInt();
+		quote_list = request->m_req_json["quote_list"].asString();
 	}
-	if( 0 == nQuoteType ) {
+	if( 0 == quote_type ) {
 		log_info = "行情订阅时 行情类型 异常！";
 		return OnErrorResult( TD_FUNC_QUOTE_ADDSUB, -1, log_info, request->m_code );
 	}
@@ -1220,40 +1203,40 @@ std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 		return OnErrorResult( TD_FUNC_QUOTE_ADDSUB, -1, log_info, request->m_code );
 	}
 
-	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == nQuoteType ) {
-		if( "" == strQuoteList ) { // 订阅全市场
+	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == quote_type ) {
+		if( "" == quote_list ) { // 订阅全市场
 			AddConSubAll( m_csm_snapshot_future, request->m_identity, connect_info );
 			ClearConSubOne( m_csm_snapshot_future, request->m_identity ); // 退订所有单个证券
 		}
 		else { // 指定证券
 			if( IsConSubAll( m_csm_snapshot_future, request->m_identity ) == false ) { // 未全市场订阅
-				std::vector<std::string> vecFilterTemp;
-				boost::split( vecFilterTemp, strQuoteList, boost::is_any_of( ", " ), boost::token_compress_on );
-				int nSizeTemp = vecFilterTemp.size();
-				for( int i = 0; i < nSizeTemp; i++ ) {
-					if( vecFilterTemp[i] != "" ) {
-						AddConSubOne( m_csm_snapshot_future, vecFilterTemp[i], request->m_identity, connect_info );
+				std::vector<std::string> vec_filter_temp;
+				boost::split( vec_filter_temp, quote_list, boost::is_any_of( ", " ), boost::token_compress_on );
+				size_t size_temp = vec_filter_temp.size();
+				for( size_t i = 0; i < size_temp; i++ ) {
+					if( vec_filter_temp[i] != "" ) {
+						AddConSubOne( m_csm_snapshot_future, vec_filter_temp[i], request->m_identity, connect_info );
 					}
 				}
 			}
 		}
 	}
 	else {
-		FormatLibrary::StandardLibrary::FormatTo( log_info, "行情订阅时 行情类型 未知！{0}", nQuoteType );
+		FormatLibrary::StandardLibrary::FormatTo( log_info, "行情订阅时 行情类型 未知！{0}", quote_type );
 		return OnErrorResult( TD_FUNC_QUOTE_ADDSUB, -1, log_info, request->m_code );
 	}
 
-	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情订阅成功。{0}", nQuoteType );
+	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情订阅成功。{0}", quote_type );
 	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 	if( NW_MSG_CODE_JSON == request->m_code ) {
-		Json::Value jsResults;
-		jsResults["ret_func"] = TD_FUNC_QUOTE_ADDSUB;
-		jsResults["ret_code"] = 0;
-		jsResults["ret_info"] = log_info;
-		jsResults["ret_numb"] = 0;
-		jsResults["ret_data"] = "";
-		return m_json_writer.write( jsResults );
+		Json::Value results_json;
+		results_json["ret_func"] = TD_FUNC_QUOTE_ADDSUB;
+		results_json["ret_code"] = 0;
+		results_json["ret_info"] = log_info;
+		results_json["ret_numb"] = 0;
+		results_json["ret_data"] = "";
+		return m_json_writer.write( results_json );
 	}
 
 	return "";
@@ -1262,51 +1245,51 @@ std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 std::string QuoterCTP_P::OnUserDelSub( Request* request ) {
 	std::string log_info;
 
-	int nQuoteType = 0;
-	std::string strQuoteList = "";
+	int32_t quote_type = 0;
+	std::string quote_list = "";
 	if( NW_MSG_CODE_JSON == request->m_code ) {
-		nQuoteType = request->m_req_json["quote_type"].asInt();
-		strQuoteList = request->m_req_json["quote_list"].asString();
+		quote_type = request->m_req_json["quote_type"].asInt();
+		quote_list = request->m_req_json["quote_list"].asString();
 	}
-	if( 0 == nQuoteType ) {
+	if( 0 == quote_type ) {
 		log_info = "行情退订时 行情类型 异常！";
 		return OnErrorResult( TD_FUNC_QUOTE_DELSUB, -1, log_info, request->m_code );
 	}
 
-	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == nQuoteType ) {
-		if( "" == strQuoteList ) { // 退订全市场
+	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == quote_type ) {
+		if( "" == quote_list ) { // 退订全市场
 			DelConSubAll( m_csm_snapshot_future, request->m_identity );
 			ClearConSubOne( m_csm_snapshot_future, request->m_identity ); // 退订所有单个证券
 		}
 		else { // 指定证券
 			if( IsConSubAll( m_csm_snapshot_future, request->m_identity ) == false ) { // 未全市场订阅，已订阅全市场的话不可能还有单证券订阅
-				std::vector<std::string> vecFilterTemp;
-				boost::split( vecFilterTemp, strQuoteList, boost::is_any_of( ", " ), boost::token_compress_on );
-				int nSizeTemp = vecFilterTemp.size();
-				for( int i = 0; i < nSizeTemp; i++ ) {
-					if( vecFilterTemp[i] != "" ) {
-						DelConSubOne( m_csm_snapshot_future, vecFilterTemp[i], request->m_identity );
+				std::vector<std::string> vec_filter_temp;
+				boost::split( vec_filter_temp, quote_list, boost::is_any_of( ", " ), boost::token_compress_on );
+				size_t size_temp = vec_filter_temp.size();
+				for( size_t i = 0; i < size_temp; i++ ) {
+					if( vec_filter_temp[i] != "" ) {
+						DelConSubOne( m_csm_snapshot_future, vec_filter_temp[i], request->m_identity );
 					}
 				}
 			}
 		}
 	}
 	else {
-		FormatLibrary::StandardLibrary::FormatTo( log_info, "行情退订时 行情类型 未知！{0}", nQuoteType );
+		FormatLibrary::StandardLibrary::FormatTo( log_info, "行情退订时 行情类型 未知！{0}", quote_type );
 		return OnErrorResult( TD_FUNC_QUOTE_DELSUB, -1, log_info, request->m_code );
 	}
 
-	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情退订成功。{0}", nQuoteType );
+	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情退订成功。{0}", quote_type );
 	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
 	if( NW_MSG_CODE_JSON == request->m_code ) {
-		Json::Value jsResults;
-		jsResults["ret_func"] = TD_FUNC_QUOTE_DELSUB;
-		jsResults["ret_code"] = 0;
-		jsResults["ret_info"] = log_info;
-		jsResults["ret_numb"] = 0;
-		jsResults["ret_data"] = "";
-		return m_json_writer.write( jsResults );
+		Json::Value results_json;
+		results_json["ret_func"] = TD_FUNC_QUOTE_DELSUB;
+		results_json["ret_code"] = 0;
+		results_json["ret_info"] = log_info;
+		results_json["ret_numb"] = 0;
+		results_json["ret_data"] = "";
+		return m_json_writer.write( results_json );
 	}
 
 	return "";
@@ -1333,34 +1316,32 @@ void QuoterCTP_P::DelConSubAll( ConSubMan& csm_con_sub_man, int32_t identity ) {
 }
 
 bool QuoterCTP_P::IsConSubAll( ConSubMan& csm_con_sub_man, int32_t identity ) {
-	bool bIsAllSubAlready = false;
-	std::map<int32_t, basicx::ConnectInfo*>::iterator itCSA;
+	bool is_all_sub_already = false;
 	csm_con_sub_man.m_lock_con_sub_all.lock();
-	itCSA = csm_con_sub_man.m_map_con_sub_all.find( identity );
-	if( itCSA != csm_con_sub_man.m_map_con_sub_all.end() ) {
-		bIsAllSubAlready = true;
+	std::map<int32_t, basicx::ConnectInfo*>::iterator it_csa = csm_con_sub_man.m_map_con_sub_all.find( identity );
+	if( it_csa != csm_con_sub_man.m_map_con_sub_all.end() ) {
+		is_all_sub_already = true;
 	}
 	csm_con_sub_man.m_lock_con_sub_all.unlock();
-	return bIsAllSubAlready;
+	return is_all_sub_already;
 }
 
 void QuoterCTP_P::AddConSubOne( ConSubMan& csm_con_sub_man, std::string& code, int32_t identity, basicx::ConnectInfo* connect_info ) {
-	ConSubOne* pOneSubCon = nullptr;
-	std::map<std::string, ConSubOne*>::iterator itCSO;
+	ConSubOne* con_sub_one = nullptr;
 	csm_con_sub_man.m_lock_con_sub_one.lock();
-	itCSO = csm_con_sub_man.m_map_con_sub_one.find( code );
-	if( itCSO != csm_con_sub_man.m_map_con_sub_one.end() ) {
-		pOneSubCon = itCSO->second;
+	std::map<std::string, ConSubOne*>::iterator it_cso = csm_con_sub_man.m_map_con_sub_one.find( code );
+	if( it_cso != csm_con_sub_man.m_map_con_sub_one.end() ) {
+		con_sub_one = it_cso->second;
 	}
 	else {
-		pOneSubCon = new ConSubOne;
-		csm_con_sub_man.m_map_con_sub_one[code] = pOneSubCon;
+		con_sub_one = new ConSubOne;
+		csm_con_sub_man.m_map_con_sub_one[code] = con_sub_one;
 	}
 	csm_con_sub_man.m_lock_con_sub_one.unlock();
 
-	pOneSubCon->m_lock_con_sub_one.lock();
-	pOneSubCon->m_map_identity[identity] = connect_info;
-	pOneSubCon->m_lock_con_sub_one.unlock();
+	con_sub_one->m_lock_con_sub_one.lock();
+	con_sub_one->m_map_identity[identity] = connect_info;
+	con_sub_one->m_lock_con_sub_one.unlock();
 
 	//std::string log_info;
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "订阅 单证券：{0} {1}", code, identity );
@@ -1368,19 +1349,18 @@ void QuoterCTP_P::AddConSubOne( ConSubMan& csm_con_sub_man, std::string& code, i
 }
 
 void QuoterCTP_P::DelConSubOne( ConSubMan& csm_con_sub_man, std::string& code, int32_t identity ) {
-	ConSubOne* pOneSubCon = nullptr;
-	std::map<std::string, ConSubOne*>::iterator itCSO;
+	ConSubOne* con_sub_one = nullptr;
 	csm_con_sub_man.m_lock_con_sub_one.lock();
-	itCSO = csm_con_sub_man.m_map_con_sub_one.find( code );
-	if( itCSO != csm_con_sub_man.m_map_con_sub_one.end() ) {
-		pOneSubCon = itCSO->second;
-		pOneSubCon->m_lock_con_sub_one.lock();
-		pOneSubCon->m_map_identity.erase( identity );
-		pOneSubCon->m_lock_con_sub_one.unlock();
-		if( pOneSubCon->m_map_identity.empty() ) {
+	std::map<std::string, ConSubOne*>::iterator it_cso = csm_con_sub_man.m_map_con_sub_one.find( code );
+	if( it_cso != csm_con_sub_man.m_map_con_sub_one.end() ) {
+		con_sub_one = it_cso->second;
+		con_sub_one->m_lock_con_sub_one.lock();
+		con_sub_one->m_map_identity.erase( identity );
+		con_sub_one->m_lock_con_sub_one.unlock();
+		if( con_sub_one->m_map_identity.empty() ) {
 			csm_con_sub_man.m_map_con_sub_one.erase( code );
 			csm_con_sub_man.m_lock_one_sub_con_del.lock();
-			csm_con_sub_man.m_list_one_sub_con_del.push_back( pOneSubCon ); //目前不进行删除
+			csm_con_sub_man.m_list_one_sub_con_del.push_back( con_sub_one ); // 目前不进行删除
 			csm_con_sub_man.m_lock_one_sub_con_del.unlock();
 		}
 
@@ -1392,78 +1372,73 @@ void QuoterCTP_P::DelConSubOne( ConSubMan& csm_con_sub_man, std::string& code, i
 }
 
 void QuoterCTP_P::ClearConSubOne( ConSubMan& csm_con_sub_man, int32_t identity ) {
-	std::vector<std::string> vecDelKeyTemp;
-	ConSubOne* pOneSubCon = nullptr;
-	std::map<std::string, ConSubOne*>::iterator itCSO;
+	std::vector<std::string> vec_del_key_temp;
+	ConSubOne* con_sub_one = nullptr;
 	csm_con_sub_man.m_lock_con_sub_one.lock();
-	for( itCSO = csm_con_sub_man.m_map_con_sub_one.begin(); itCSO != csm_con_sub_man.m_map_con_sub_one.end(); itCSO++ ) {
-		pOneSubCon = itCSO->second;
-		pOneSubCon->m_lock_con_sub_one.lock();
-		pOneSubCon->m_map_identity.erase( identity );
-		pOneSubCon->m_lock_con_sub_one.unlock();
-		if( pOneSubCon->m_map_identity.empty() ) {
-			vecDelKeyTemp.push_back( itCSO->first );
+	for( auto it = csm_con_sub_man.m_map_con_sub_one.begin(); it != csm_con_sub_man.m_map_con_sub_one.end(); it++ ) {
+		con_sub_one = it->second;
+		con_sub_one->m_lock_con_sub_one.lock();
+		con_sub_one->m_map_identity.erase( identity );
+		con_sub_one->m_lock_con_sub_one.unlock();
+		if( con_sub_one->m_map_identity.empty() ) {
+			vec_del_key_temp.push_back( it->first );
 			csm_con_sub_man.m_lock_one_sub_con_del.lock();
-			csm_con_sub_man.m_list_one_sub_con_del.push_back( pOneSubCon ); // 目前不进行删除
+			csm_con_sub_man.m_list_one_sub_con_del.push_back( con_sub_one ); // 目前不进行删除
 			csm_con_sub_man.m_lock_one_sub_con_del.unlock();
 		}
 	}
-	for( int i = 0; i < (int)vecDelKeyTemp.size(); i++ ) {
-		csm_con_sub_man.m_map_con_sub_one.erase( vecDelKeyTemp[i] );
+	for( size_t i = 0; i < vec_del_key_temp.size(); i++ ) {
+		csm_con_sub_man.m_map_con_sub_one.erase( vec_del_key_temp[i] );
 	}
 	csm_con_sub_man.m_lock_con_sub_one.unlock();
 }
 
 void QuoterCTP_P::ClearUnavailableConSub( ConSubMan& csm_con_sub_man, bool is_idle_time ) { // 清理所有已经失效的连接订阅，一般在空闲时进行
-	std::vector<int32_t> vecDelKeyCSA;
-	std::map<int32_t, basicx::ConnectInfo*>::iterator itCSA;
+	std::vector<int32_t> vec_del_key_csa;
 	csm_con_sub_man.m_lock_con_sub_all.lock();
-	for( itCSA = csm_con_sub_man.m_map_con_sub_all.begin(); itCSA != csm_con_sub_man.m_map_con_sub_all.end(); itCSA++ ) {
-		if( false == m_net_server_broad->IsConnectAvailable( itCSA->second ) ) { //已失效
-			vecDelKeyCSA.push_back( itCSA->first );
+	for( auto it = csm_con_sub_man.m_map_con_sub_all.begin(); it != csm_con_sub_man.m_map_con_sub_all.end(); it++ ) {
+		if( false == m_net_server_broad->IsConnectAvailable( it->second ) ) { // 已失效
+			vec_del_key_csa.push_back( it->first );
 		}
 	}
-	for( int i = 0; i < (int)vecDelKeyCSA.size(); i++ ) {
-		csm_con_sub_man.m_map_con_sub_all.erase( vecDelKeyCSA[i] );
+	for( size_t i = 0; i < vec_del_key_csa.size(); i++ ) {
+		csm_con_sub_man.m_map_con_sub_all.erase( vec_del_key_csa[i] );
 	}
 	csm_con_sub_man.m_lock_con_sub_all.unlock();
 
-	std::vector<std::string> vecDelKeyCSO;
-	ConSubOne* pOneSubCon = nullptr;
-	std::map<std::string, ConSubOne*>::iterator itCSO;
+	std::vector<std::string> vec_del_key_cso;
+	ConSubOne* con_sub_one = nullptr;
 	csm_con_sub_man.m_lock_con_sub_one.lock();
-	for( itCSO = csm_con_sub_man.m_map_con_sub_one.begin(); itCSO != csm_con_sub_man.m_map_con_sub_one.end(); itCSO++ ) {
-		pOneSubCon = itCSO->second;
-		std::vector<int32_t> vecDelKeyID;
-		std::map<int32_t, basicx::ConnectInfo*>::iterator itID;
-		pOneSubCon->m_lock_con_sub_one.lock();
-		for( itID = pOneSubCon->m_map_identity.begin(); itID != pOneSubCon->m_map_identity.end(); itID++ ) {
-			if( false == m_net_server_broad->IsConnectAvailable( itID->second ) ) { // 已失效
-				vecDelKeyID.push_back( itID->first );
+	for( auto it_cso = csm_con_sub_man.m_map_con_sub_one.begin(); it_cso != csm_con_sub_man.m_map_con_sub_one.end(); it_cso++ ) {
+		con_sub_one = it_cso->second;
+		std::vector<int32_t> vec_del_key_id;
+		con_sub_one->m_lock_con_sub_one.lock();
+		for( auto it_id = con_sub_one->m_map_identity.begin(); it_id != con_sub_one->m_map_identity.end(); it_id++ ) {
+			if( false == m_net_server_broad->IsConnectAvailable( it_id->second ) ) { // 已失效
+				vec_del_key_id.push_back( it_id->first );
 			}
 		}
-		for( int i = 0; i < (int)vecDelKeyID.size(); i++ ) {
-			pOneSubCon->m_map_identity.erase( vecDelKeyID[i] );
+		for( size_t i = 0; i < vec_del_key_id.size(); i++ ) {
+			con_sub_one->m_map_identity.erase( vec_del_key_id[i] );
 		}
-		pOneSubCon->m_lock_con_sub_one.unlock();
-		if( pOneSubCon->m_map_identity.empty() ) {
-			vecDelKeyCSO.push_back( itCSO->first );
+		con_sub_one->m_lock_con_sub_one.unlock();
+		if( con_sub_one->m_map_identity.empty() ) {
+			vec_del_key_cso.push_back( it_cso->first );
 			csm_con_sub_man.m_lock_one_sub_con_del.lock();
-			csm_con_sub_man.m_list_one_sub_con_del.push_back( pOneSubCon ); // 目前不进行删除
+			csm_con_sub_man.m_list_one_sub_con_del.push_back( con_sub_one ); // 目前不进行删除
 			csm_con_sub_man.m_lock_one_sub_con_del.unlock();
 		}
 	}
-	for( int i = 0; i < (int)vecDelKeyCSO.size(); i++ ) {
-		csm_con_sub_man.m_map_con_sub_one.erase( vecDelKeyCSO[i] );
+	for( size_t i = 0; i < vec_del_key_cso.size(); i++ ) {
+		csm_con_sub_man.m_map_con_sub_one.erase( vec_del_key_cso[i] );
 	}
 	csm_con_sub_man.m_lock_con_sub_one.unlock();
 
 	if( true == is_idle_time ) { // 如果确定是在空闲时执行，则 m_list_one_sub_con_del 也可以清理
-		std::list<ConSubOne*>::iterator itOSC_L;
 		csm_con_sub_man.m_lock_one_sub_con_del.lock();
-		for( itOSC_L = csm_con_sub_man.m_list_one_sub_con_del.begin(); itOSC_L != csm_con_sub_man.m_list_one_sub_con_del.end(); itOSC_L++ ) {
-			if( (*itOSC_L) != nullptr ) {
-				delete (*itOSC_L);
+		for( auto it = csm_con_sub_man.m_list_one_sub_con_del.begin(); it != csm_con_sub_man.m_list_one_sub_con_del.end(); it++ ) {
+			if( (*it) != nullptr ) {
+				delete (*it);
 			}
 		}
 		csm_con_sub_man.m_list_one_sub_con_del.clear();
@@ -1472,14 +1447,14 @@ void QuoterCTP_P::ClearUnavailableConSub( ConSubMan& csm_con_sub_man, bool is_id
 }
 
 void QuoterCTP_P::CommitResult( int32_t task_id, int32_t identity, int32_t code, std::string& data ) {
-	int nNetFlag = task_id % 10;
-	if( 1 == nNetFlag ) { // Broad：1
+	int32_t net_flag = task_id % 10;
+	if( 1 == net_flag ) { // broad：1
 		basicx::ConnectInfo* connect_info = m_net_server_broad->Server_GetConnect( identity );
 		if( connect_info != nullptr ) {
 			m_net_server_broad->Server_SendData( connect_info, NW_MSG_TYPE_USER_DATA, code, data );
 		}
 	}
-	else if( 2 == nNetFlag ) { // Query：2
+	else if( 2 == net_flag ) { // query：2
 		basicx::ConnectInfo* connect_info = m_net_server_query->Server_GetConnect( identity );
 		if( connect_info != nullptr ) {
 			m_net_server_query->Server_SendData( connect_info, NW_MSG_TYPE_USER_DATA, code, data );
@@ -1491,13 +1466,13 @@ std::string QuoterCTP_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 	LogPrint( basicx::syslog_level::c_error, m_log_cate, ret_info );
 
 	if( NW_MSG_CODE_JSON == encode ) {
-		Json::Value jsResults;
-		jsResults["ret_func"] = ret_func;
-		jsResults["ret_code"] = ret_code;
-		jsResults["ret_info"] = ret_info;
-		jsResults["ret_numb"] = 0;
-		jsResults["ret_data"] = "";
-		return m_json_writer.write( jsResults );
+		Json::Value results_json;
+		results_json["ret_func"] = ret_func;
+		results_json["ret_code"] = ret_code;
+		results_json["ret_info"] = ret_info;
+		results_json["ret_numb"] = 0;
+		results_json["ret_data"] = "";
+		return m_json_writer.write( results_json );
 	}
 
 	return "";
@@ -1520,13 +1495,13 @@ void CThostFtdcMdSpiImpl::OnFrontConnected() {
 	log_info = "连接成功。尝试行情登录 ....";
 	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 
-	CThostFtdcReqUserLoginField reqUserLogin;
-	memset( &reqUserLogin, 0, sizeof( reqUserLogin ) );
-	strcpy_s( reqUserLogin.BrokerID, m_quoter_ctp_p->m_configs.m_strbroker_id.c_str() );
-	strcpy_s( reqUserLogin.UserID, m_quoter_ctp_p->m_configs.m_username.c_str() );
-	strcpy_s( reqUserLogin.Password, m_quoter_ctp_p->m_configs.m_password.c_str() );
-	int nRet = m_user_api->ReqUserLogin( &reqUserLogin, 0 );
-	if( 0 == nRet ) {
+	CThostFtdcReqUserLoginField req_user_login;
+	memset( &req_user_login, 0, sizeof( req_user_login ) );
+	strcpy_s( req_user_login.BrokerID, m_quoter_ctp_p->m_configs.m_strbroker_id.c_str() );
+	strcpy_s( req_user_login.UserID, m_quoter_ctp_p->m_configs.m_username.c_str() );
+	strcpy_s( req_user_login.Password, m_quoter_ctp_p->m_configs.m_password.c_str() );
+	int32_t result = m_user_api->ReqUserLogin( &req_user_login, 0 );
+	if( 0 == result ) {
 		log_info = "发送行情 登录 请求成功。";
 		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
 	}
@@ -1577,14 +1552,14 @@ void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserL
 		}
 
 		// 这里就不先退订了
-		int nContractNum = m_quoter_ctp_p->m_vec_contract.size();
-		char** ppcContract = new char*[nContractNum];
-		for( int i = 0; i < nContractNum; i++ ) {
-			ppcContract[i] = const_cast<char*>(m_quoter_ctp_p->m_vec_contract[i].c_str());
+		size_t contract_number = m_quoter_ctp_p->m_vec_contract.size();
+		char** contract = new char*[contract_number];
+		for( size_t i = 0; i < contract_number; i++ ) {
+			contract[i] = const_cast<char*>(m_quoter_ctp_p->m_vec_contract[i].c_str());
 		}
 
-		int nRet = m_user_api->SubscribeMarketData( ppcContract, nContractNum );
-		if( 0 == nRet ) {
+		int32_t result = m_user_api->SubscribeMarketData( contract, contract_number );
+		if( 0 == result ) {
 			m_quoter_ctp_p->m_subscribe_ok = true;
 			log_info = "发送行情 订阅 请求成功。";
 			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
@@ -1595,7 +1570,7 @@ void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserL
 			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
 		}
 
-		delete [] ppcContract;
+		delete[] contract;
 	}
 }
 
@@ -1626,11 +1601,11 @@ void CThostFtdcMdSpiImpl::OnRspUnSubMarketData( CThostFtdcSpecificInstrumentFiel
 }
 
 void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* pDepthMarketData ) {
-	SYSTEMTIME lpSysTime;
-	GetLocalTime( &lpSysTime );
-	tm tmNowTime = basicx::GetNowTime();
-	char cNowDateTemp[9];
-	strftime( cNowDateTemp, 9, "%Y%m%d", &tmNowTime);
+	SYSTEMTIME sys_time;
+	GetLocalTime( &sys_time );
+	tm now_time_t = basicx::GetNowTime();
+	char now_date_temp[9];
+	strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
 
 	SnapshotFuture snapshot_future_temp;
 	memset( &snapshot_future_temp, 0, sizeof( SnapshotFuture ) );
@@ -1685,8 +1660,8 @@ void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* 
 //	quote_time_temp.Format( "%s%03d", pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec ); // HH:MM:SSmmm
 	basicx::StringReplace( quote_time_temp, ":", "" );
 	snapshot_future_temp.m_quote_time = atoi( quote_time_temp.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
-	snapshot_future_temp.m_local_date = ( tmNowTime.tm_year + 1900 ) * 10000 + ( tmNowTime.tm_mon + 1 ) * 100 + tmNowTime.tm_mday; // 本地日期 // YYYYMMDD
-	snapshot_future_temp.m_local_time = tmNowTime.tm_hour * 10000000 + tmNowTime.tm_min * 100000 + tmNowTime.tm_sec * 1000 + lpSysTime.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
+	snapshot_future_temp.m_local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // 本地日期 // YYYYMMDD
+	snapshot_future_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
 	m_quoter_ctp_p->m_cache_snapshot_future.m_local_index++;
 	snapshot_future_temp.m_local_index = m_quoter_ctp_p->m_cache_snapshot_future.m_local_index; // 本地序号
 
@@ -1742,22 +1717,22 @@ void CThostFtdcTraderSpiImpl::OnHeartBeatWarning( int nTimeLapse ) {
 }
 
 int32_t CThostFtdcTraderSpiImpl::ReqUserLogin( std::string broker_id, std::string user_id, std::string password ) {
-	CThostFtdcReqUserLoginField Req;
-	memset( &Req, 0, sizeof( Req ) );
-	strcpy_s( Req.BrokerID, const_cast<char*>(broker_id.c_str()) ); // 经纪公司代码 char 11
-	strcpy_s( Req.UserID, const_cast<char*>(user_id.c_str()) ); // 用户代码 char 16
-	strcpy_s( Req.Password, const_cast<char*>(password.c_str()) ); // 密码 char 41
-	//Req.TradingDay; // 交易日 char 9
-	//Req.UserProductInfo; // 用户端产品信息 char 11
-	//Req.InterfaceProductInfo; // 接口端产品信息 char 11
-	//Req.ProtocolInfo; // 协议信息 char 11
-	//Req.MacAddress; // Mac地址 char 21
-	//Req.OneTimePassword; // 动态密码 char 41
-	//Req.ClientIPAddress; // 终端IP地址 char 16
+	CThostFtdcReqUserLoginField req;
+	memset( &req, 0, sizeof( req ) );
+	strcpy_s( req.BrokerID, const_cast<char*>(broker_id.c_str()) ); // 经纪公司代码 char 11
+	strcpy_s( req.UserID, const_cast<char*>(user_id.c_str()) ); // 用户代码 char 16
+	strcpy_s( req.Password, const_cast<char*>(password.c_str()) ); // 密码 char 41
+	//req.TradingDay; // 交易日 char 9
+	//req.UserProductInfo; // 用户端产品信息 char 11
+	//req.InterfaceProductInfo; // 接口端产品信息 char 11
+	//req.ProtocolInfo; // 协议信息 char 11
+	//req.MacAddress; // Mac地址 char 21
+	//req.OneTimePassword; // 动态密码 char 41
+	//req.ClientIPAddress; // 终端IP地址 char 16
 	m_login_ok = false; // 只用于首次登录成功标记
 	m_last_rsp_is_error = false;
-	int nRequestID = GetRequestID();
-	return m_user_api->ReqUserLogin( &Req, nRequestID );
+	int32_t request_id = GetRequestID();
+	return m_user_api->ReqUserLogin( &req, request_id );
 }
 
 void CThostFtdcTraderSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
@@ -1772,7 +1747,7 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspU
 		m_login_ok = true; // 只用于首次登录成功标记
 		m_front_id = pRspUserLogin->FrontID; // 前置编号 int
 		m_session_id = pRspUserLogin->SessionID; // 会话编号 int
-		//m_pTraderCTP_P->m_nOrderRef = atoi( pRspUserLogin->MaxOrderRef ); // 最大报单引用 char 13 // 每次新建会话 CTP 都会重置 OrderRef 为1，所以这里以自己计数为准
+		//m_trader_ctp_p->m_order_ref = atoi( pRspUserLogin->MaxOrderRef ); // 最大报单引用 char 13 // 每次新建会话 CTP 都会重置 OrderRef 为1，所以这里以自己计数为准
 		//pRspUserLogin->TradingDay; // 交易日 char 9
 		//pRspUserLogin->LoginTime; // 登录成功时间 char 9
 		//pRspUserLogin->BrokerID; // 经纪公司代码 char 11
@@ -1788,14 +1763,14 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspU
 }
 
 int32_t CThostFtdcTraderSpiImpl::ReqUserLogout( std::string broker_id, std::string user_id ) {
-	CThostFtdcUserLogoutField Req;
-	memset( &Req, 0, sizeof( Req ) );
-	strcpy_s( Req.BrokerID, const_cast<char*>(broker_id.c_str()) ); // 经纪公司代码 char 11
-	strcpy_s( Req.UserID, const_cast<char*>(user_id.c_str()) ); // 用户代码 char 16
+	CThostFtdcUserLogoutField req;
+	memset( &req, 0, sizeof( req ) );
+	strcpy_s( req.BrokerID, const_cast<char*>(broker_id.c_str()) ); // 经纪公司代码 char 11
+	strcpy_s( req.UserID, const_cast<char*>(user_id.c_str()) ); // 用户代码 char 16
 	m_logout_ok = false; // 只用于末次登出成功标记
 	m_last_rsp_is_error = false;
-	int nRequestID = GetRequestID();
-	return m_user_api->ReqUserLogout( &Req, nRequestID );
+	int32_t request_id = GetRequestID();
+	return m_user_api->ReqUserLogout( &req, request_id );
 }
 
 void CThostFtdcTraderSpiImpl::OnRspUserLogout( CThostFtdcUserLogoutField* pUserLogout, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
@@ -1816,15 +1791,15 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogout( CThostFtdcUserLogoutField* pUserL
 }
 
 int32_t CThostFtdcTraderSpiImpl::ReqQryInstrument() {
-	CThostFtdcQryInstrumentField Req;
-	memset( &Req, 0, sizeof( Req ) );
-	//Req.InstrumentID; // 合约代码 char 31 // 为空表示查询所有合约
-	//Req.ExchangeID; // 交易所代码 char 9
-	//Req.ExchangeInstID; // 合约在交易所的代码 char 31
-	//Req.ProductID; // 产品代码 char 31
+	CThostFtdcQryInstrumentField req;
+	memset( &req, 0, sizeof( req ) );
+	//req.InstrumentID; // 合约代码 char 31 // 为空表示查询所有合约
+	//req.ExchangeID; // 交易所代码 char 9
+	//req.ExchangeInstID; // 合约在交易所的代码 char 31
+	//req.ProductID; // 产品代码 char 31
 	m_qry_instrument = false; //
-	int nRequestID = GetRequestID();
-	return m_user_api->ReqQryInstrument( &Req, nRequestID );
+	int32_t request_id = GetRequestID();
+	return m_user_api->ReqQryInstrument( &req, request_id );
 }
 
 void CThostFtdcTraderSpiImpl::OnRspQryInstrument( CThostFtdcInstrumentField* pInstrument, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
@@ -1845,10 +1820,10 @@ void CThostFtdcTraderSpiImpl::OnRspQryInstrument( CThostFtdcInstrumentField* pIn
 		}
 
 		std::string contract_code = pInstrument->InstrumentID; // 合约代码 char 31
-		std::string strExchangeID = pInstrument->ExchangeID; // 交易所代码 char 9
+		std::string exchange_id = pInstrument->ExchangeID; // 交易所代码 char 9
 		if( contract_code != "" && contract_code.length() < 8 ) { // 有些测试环境(永安期货)会查询到类似 IO1402-C-2550 这样的代码导致行情接收时代码字段溢出崩溃
 			m_quoter_ctp_p->m_vec_contract.push_back( contract_code );
-			FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, strExchangeID );
+			FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, exchange_id );
 			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
 		}
 	}
@@ -1863,9 +1838,9 @@ int32_t CThostFtdcTraderSpiImpl::GetRequestID() {
 }
 
 std::string CThostFtdcTraderSpiImpl::GetLastErrorMsg() {
-	std::string strLastErrorMsg = m_last_error_msg;
+	std::string last_error_msg = m_last_error_msg;
 	m_last_error_msg = "无错误信息。";
-	return strLastErrorMsg;
+	return last_error_msg;
 }
 
 // 预设 QuoterCTP 函数实现

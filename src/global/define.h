@@ -26,7 +26,7 @@
 // 软件信息
 #define DEF_APP_NAME "QuoteX" // 系统英文名称
 #define DEF_APP_NAME_CN "证 券 行 情 服 务 器" // 系统中文名称
-#define DEF_APP_VERSION "V0.1.0-Beta Build 20180401" // 系统版本号
+#define DEF_APP_VERSION "V0.1.0-Beta Build 20180601" // 系统版本号
 #define DEF_APP_DEVELOPER "Developed by the X-Lab." // 开发者声明
 #define DEF_APP_COMPANY "X-Lab (Shanghai) Co., Ltd." // 公司声明
 #define DEF_APP_COPYRIGHT "Copyright 2018-2018 X-Lab All Rights Reserved." // 版权声明
