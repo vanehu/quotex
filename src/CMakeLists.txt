@@ -251,9 +251,11 @@ IF (WIN32)
 	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/../changes.md" 
+	          "${PROJECT_SOURCE_DIR}/../library.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license.txt" 
 	          "${PROJECT_SOURCE_DIR}/../license_bsd.txt" 
-	          "${PROJECT_SOURCE_DIR}/../license_chs.txt" 
-	          "${PROJECT_SOURCE_DIR}/../license_eng.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license_lgpl_chs.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license_lgpl_eng.txt" 
 	          "${PROJECT_SOURCE_DIR}/../readme.md" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/doc"
 	)
@@ -308,9 +310,11 @@ ELSEIF ((UNIX) OR (APPLE))
 	)
     INSTALL (
 	    FILES "${PROJECT_SOURCE_DIR}/../changes.md" 
+	          "${PROJECT_SOURCE_DIR}/../library.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license.txt" 
 	          "${PROJECT_SOURCE_DIR}/../license_bsd.txt" 
-	          "${PROJECT_SOURCE_DIR}/../license_chs.txt" 
-	          "${PROJECT_SOURCE_DIR}/../license_eng.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license_lgpl_chs.txt" 
+	          "${PROJECT_SOURCE_DIR}/../license_lgpl_eng.txt" 
 	          "${PROJECT_SOURCE_DIR}/../readme.md" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/doc" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
