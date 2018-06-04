@@ -263,8 +263,8 @@ IF (WIN32)
 	)
     INSTALL (
 		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ctp.dll" 
-			  "${PROJECT_SOURCE_DIR}/plugins/quoter_ctp/quoter_ctp.ini" 
-			  "${PROJECT_SOURCE_DIR}/plugins/quoter_ctp/quoter_ctp.xml" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp"
 	)
 ELSEIF ((UNIX) OR (APPLE))
@@ -322,8 +322,8 @@ ELSEIF ((UNIX) OR (APPLE))
 	)
     INSTALL (
 		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ctp.so" 
-			  "${PROJECT_SOURCE_DIR}/plugins/quoter_ctp/quoter_ctp.ini" 
-			  "${PROJECT_SOURCE_DIR}/plugins/quoter_ctp/quoter_ctp.xml" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)

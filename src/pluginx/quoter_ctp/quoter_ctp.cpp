@@ -146,12 +146,12 @@ bool QuoterCTP_P::ReadConfig( std::string file_path )
 
 	// 托管时保护账户信息
 	if( "0" == m_configs.m_username ) {
-		//m_configs.m_username = "88870001";
-		//m_configs.m_password = "17260317";
+		//m_configs.m_username = "12345678";
+		//m_configs.m_password = "123456";
 	}
 	if( "0" == m_configs.m_qc_username ) {
-		//m_configs.m_qc_username = "88870001";
-		//m_configs.m_qc_password = "17260317";
+		//m_configs.m_qc_username = "12345678";
+		//m_configs.m_qc_password = "123456";
 	}
 
 	m_configs.m_need_dump = atoi( node_plugin.child_value( "NeedDump" ) );
@@ -1233,7 +1233,7 @@ std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 		Json::Value results_json;
 		results_json["ret_func"] = TD_FUNC_QUOTE_ADDSUB;
 		results_json["ret_code"] = 0;
-		results_json["ret_info"] = log_info;
+		results_json["ret_info"] = basicx::StringToUTF8( log_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
 		return m_json_writer.write( results_json );
@@ -1286,7 +1286,7 @@ std::string QuoterCTP_P::OnUserDelSub( Request* request ) {
 		Json::Value results_json;
 		results_json["ret_func"] = TD_FUNC_QUOTE_DELSUB;
 		results_json["ret_code"] = 0;
-		results_json["ret_info"] = log_info;
+		results_json["ret_info"] = basicx::StringToUTF8( log_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
 		return m_json_writer.write( results_json );
@@ -1469,7 +1469,7 @@ std::string QuoterCTP_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 		Json::Value results_json;
 		results_json["ret_func"] = ret_func;
 		results_json["ret_code"] = ret_code;
-		results_json["ret_info"] = ret_info;
+		results_json["ret_info"] = basicx::StringToUTF8( ret_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
 		return m_json_writer.write( results_json );
@@ -1656,10 +1656,11 @@ void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* 
 	snapshot_future_temp.m_delta = (int32_t)(pDepthMarketData->CurrDelta * 10000); // 今日虚实度 // 10000
 	snapshot_future_temp.m_pre_delta = (int32_t)(pDepthMarketData->PreDelta * 10000); // 昨日虚实度 // 10000
 	snapshot_future_temp.m_quote_date = atoi( pDepthMarketData->TradingDay ); // 行情日期 // YYYYMMDD
-	std::string quote_time_temp = "";
-//	quote_time_temp.Format( "%s%03d", pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec ); // HH:MM:SSmmm
-	basicx::StringReplace( quote_time_temp, ":", "" );
-	snapshot_future_temp.m_quote_time = atoi( quote_time_temp.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
+	char c_quote_time[12] = { 0 };
+	sprintf( c_quote_time, "%s%03d", pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec ); // HH:MM:SSmmm
+	std::string s_quote_time( c_quote_time );
+	basicx::StringReplace( s_quote_time, ":", "" );
+	snapshot_future_temp.m_quote_time = atoi( s_quote_time.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
 	snapshot_future_temp.m_local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // 本地日期 // YYYYMMDD
 	snapshot_future_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
 	m_quoter_ctp_p->m_cache_snapshot_future.m_local_index++;
