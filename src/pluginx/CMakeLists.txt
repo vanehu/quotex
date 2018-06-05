@@ -20,3 +20,6 @@
 # Be sure to retain the above copyright notice and conditions.
 
 ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp")
+ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb")
+ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/pluginx/quoter_ltp")
+ADD_SUBDIRECTORY ("${PROJECT_SOURCE_DIR}/pluginx/quoter_tdf")

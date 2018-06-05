@@ -219,6 +219,9 @@ IF (WIN32)
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -247,6 +250,10 @@ IF (WIN32)
 		      "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
 		      "${SDKDIR_INTERFACE}/CTP_F/thostmduserapi.dll" 
 		      "${SDKDIR_INTERFACE}/CTP_F/thosttraderapi.dll" 
+		      "${SDKDIR_INTERFACE}/LTS/L2mduserapi.dll" 
+		      "${SDKDIR_INTERFACE}/LTS/securityqueryapi.dll" 
+		      "${SDKDIR_INTERFACE}/TDF/CCECore.dll" 
+		      "${SDKDIR_INTERFACE}/TDF/TDFAPI.dll" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
 	)
     INSTALL (
@@ -269,12 +276,33 @@ IF (WIN32)
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp"
 	)
+    #INSTALL (
+	#	FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ltb.dll" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb/quoter_ltb.ini" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb/quoter_ltb.xml" 
+	#    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb"
+	#)
+    #INSTALL (
+	#	FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ltp.dll" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltp/quoter_ltp.ini" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltp/quoter_ltp.xml" 
+	#    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp"
+	#)
+    #INSTALL (
+	#	FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_tdf.dll" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_tdf/quoter_tdf.ini" 
+	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_tdf/quoter_tdf.xml" 
+	#    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf"
+	#)
 ELSEIF ((UNIX) OR (APPLE))
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/configs")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp")
+    FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/doc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/etc")
 	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib")
@@ -305,6 +333,10 @@ ELSEIF ((UNIX) OR (APPLE))
 		      "${PROJECT_SOURCE_DIR}/quotex/logo.ico" 
 		      "${SDKDIR_INTERFACE}/CTP_F/thostmduserapi.so" 
 		      "${SDKDIR_INTERFACE}/CTP_F/thosttraderapi.so" 
+		      "${SDKDIR_INTERFACE}/LTS/L2mduserapi.so" 
+		      "${SDKDIR_INTERFACE}/LTS/securityqueryapi.so" 
+		      "${SDKDIR_INTERFACE}/TDF/CCECore.so" 
+		      "${SDKDIR_INTERFACE}/TDF/TDFAPI.so" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/extdlls"
 		# PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE # 755
 	)
@@ -329,6 +361,27 @@ ELSEIF ((UNIX) OR (APPLE))
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp" 
+		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
+	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ltb.so" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb/quoter_ltb.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb/quoter_ltb.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb" 
+		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
+	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ltp.so" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltp/quoter_ltp.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltp/quoter_ltp.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp" 
+		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
+	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_tdf.so" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_tdf/quoter_tdf.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_tdf/quoter_tdf.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)
 ENDIF ()

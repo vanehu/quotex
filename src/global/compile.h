@@ -36,6 +36,15 @@
 #define QUOTER_CTP_EXP
 //#define QUOTER_CTP_IMP
 
+#define QUOTER_LTB_EXP
+//#define QUOTER_LTB_IMP
+
+#define QUOTER_LTP_EXP
+//#define QUOTER_LTP_IMP
+
+#define QUOTER_TDF_EXP
+//#define QUOTER_TDF_IMP
+
 //---------- …Ë÷√Ω· ¯ ----------//
 
 #ifdef QUOTEX_GLOBAL_EXP
@@ -64,6 +73,36 @@
 
 #ifdef QUOTER_CTP_IMP
     #define QUOTER_CTP_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_LTB_EXP
+    #define QUOTER_LTB_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_LTB_IMP
+    #define QUOTER_LTB_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_LTP_EXP
+    #define QUOTER_LTP_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_LTP_IMP
+    #define QUOTER_LTP_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_TDF_EXP
+    #define QUOTER_TDF_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_TDF_IMP
+    #define QUOTER_TDF_EXPIMP __declspec(dllimport)
 #endif
 
 //------------------------------//

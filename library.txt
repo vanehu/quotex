@@ -23,3 +23,13 @@ Library: CPPFormatLibrary
 Version: 0.1.0
 License: None
 Website: https://github.com/sczybt/CPPFormatLibrary
+
+Library: JsonCpp
+Version: 0.6.0-rc2
+License: MIT
+Website: https://github.com/open-source-parsers/jsoncpp
+
+Library: zlib
+Version: 1.2.8
+License: ZLIB
+Website: http://www.zlib.net/

@@ -1,2 +1,6 @@
+CCECore.dll           -->  TDF
+L2mduserapi.dll       -->  LTP
+securityqueryapi.dll  -->  LTS
+TDFAPI.dll            -->  TDF
 thostmduserapi.dll    -->  CTP
 thosttraderapi.dll    -->  CTP
