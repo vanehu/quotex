@@ -43,14 +43,14 @@ IF (CMAKE_LINKTYPE_SHARED) # 插件仅限动态链接模式
     ENDIF ()
 ENDIF ()
 
-FILE (GLOB PLUGIN_TEST_1_HEADER_FILES "./*.h")
-FILE (GLOB PLUGIN_TEST_1_SOURCE_FILES "./*.cpp")
+FILE (GLOB PLUGIN_HEADER_FILES "./*.h")
+FILE (GLOB PLUGIN_SOURCE_FILES "./*.cpp")
 
-SOURCE_GROUP ("Header Files" FILES ${PLUGIN_TEST_1_HEADER_FILES})
-SOURCE_GROUP ("Source Files" FILES ${PLUGIN_TEST_1_SOURCE_FILES})
+SOURCE_GROUP ("Header Files" FILES ${PLUGIN_HEADER_FILES})
+SOURCE_GROUP ("Source Files" FILES ${PLUGIN_SOURCE_FILES})
 
 IF (CMAKE_LINKTYPE_SHARED) # 插件仅限动态链接模式
-    ADD_LIBRARY ("quoter_ctp" SHARED ${PLUGIN_TEST_1_HEADER_FILES} ${PLUGIN_TEST_1_SOURCE_FILES})
+    ADD_LIBRARY ("quoter_ctp" SHARED ${PLUGIN_HEADER_FILES} ${PLUGIN_SOURCE_FILES})
     IF (WIN32)
         TARGET_LINK_LIBRARIES ("quoter_ctp" common.lib syslog.lib syscfg.lib sysrtm.lib sysdbi_s.lib network.lib plugins.lib json_vc71_libmt.lib zlibwapi.lib odbc32.lib thostmduserapi.lib thosttraderapi.lib)
     ELSEIF (UNIX)
