@@ -20,8 +20,8 @@
 * Be sure to retain the above copyright notice and conditions.
 */
 
-#ifndef QUOTER_CTP_STRUCT_X_H
-#define QUOTER_CTP_STRUCT_X_H
+#ifndef QUOTER_CTP_STRUCT_CTP_H
+#define QUOTER_CTP_STRUCT_CTP_H
 
 #include <map>
 #include <list>
@@ -100,7 +100,7 @@ struct ConSubMan
 struct Config // 保证均被赋值
 {
 	std::string m_address;
-	std::string m_strbroker_id;
+	std::string m_broker_id;
 	std::string m_username;
 	std::string m_password;
 	std::string m_sub_list_from;
@@ -204,4 +204,4 @@ struct SnapshotFuture // 所有变量均会被赋值
 
 #pragma pack( pop )
 
-#endif // QUOTER_CTP_STRUCT_X_H
+#endif // QUOTER_CTP_STRUCT_CTP_H

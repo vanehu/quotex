@@ -114,7 +114,7 @@ bool QuoterCTP_P::ReadConfig( std::string file_path )
 	}
 	
 	m_configs.m_address = node_plugin.child_value( "Address" );
-	m_configs.m_strbroker_id = node_plugin.child_value( "BrokerID" );
+	m_configs.m_broker_id = node_plugin.child_value( "BrokerID" );
 	m_configs.m_username = node_plugin.child_value( "Username" );
 	m_configs.m_password = node_plugin.child_value( "Password" );
 	m_configs.m_sub_list_from = node_plugin.child_value( "SubListFrom" );
@@ -162,7 +162,7 @@ bool QuoterCTP_P::ReadConfig( std::string file_path )
 	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
 	m_configs.m_night_time = atoi( node_plugin.child_value( "NightTime" ) );
 
-	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6} {7}", m_configs.m_address, m_configs.m_strbroker_id, m_configs.m_username, m_configs.m_password, 
+	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6} {7}", m_configs.m_address, m_configs.m_broker_id, m_configs.m_username, m_configs.m_password, 
 	//	m_configs.m_sub_list_from, m_configs.m_dump_time, m_configs.m_init_time, m_configs.m_night_time );
 	//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
 
@@ -1082,7 +1082,7 @@ void QuoterCTP_P::OnNetServerData( basicx::NetServerData& net_server_data_temp )
 }
 
 int32_t QuoterCTP_P::gzCompress( Bytef* data_in, uLong size_in, Bytef* data_out, uLong* size_out, int32_t level ) {
-	int32_t err = 0;
+	int32_t error = 0;
 	z_stream c_stream;
 
 	if( data_in && size_in > 0 ) {
@@ -1111,10 +1111,10 @@ int32_t QuoterCTP_P::gzCompress( Bytef* data_in, uLong size_in, Bytef* data_out,
 		}
 
 		for( ; ; ) {
-			if( ( err = deflate( &c_stream, Z_FINISH ) ) == Z_STREAM_END ) {
+			if( ( error = deflate( &c_stream, Z_FINISH ) ) == Z_STREAM_END ) {
 				break;
 			}
-			if( err != Z_OK ) {
+			if( error != Z_OK ) {
 				return -1;
 			}
 		}
@@ -1497,7 +1497,7 @@ void CThostFtdcMdSpiImpl::OnFrontConnected() {
 
 	CThostFtdcReqUserLoginField req_user_login;
 	memset( &req_user_login, 0, sizeof( req_user_login ) );
-	strcpy_s( req_user_login.BrokerID, m_quoter_ctp_p->m_configs.m_strbroker_id.c_str() );
+	strcpy_s( req_user_login.BrokerID, m_quoter_ctp_p->m_configs.m_broker_id.c_str() );
 	strcpy_s( req_user_login.UserID, m_quoter_ctp_p->m_configs.m_username.c_str() );
 	strcpy_s( req_user_login.Password, m_quoter_ctp_p->m_configs.m_password.c_str() );
 	int32_t result = m_user_api->ReqUserLogin( &req_user_login, 0 );

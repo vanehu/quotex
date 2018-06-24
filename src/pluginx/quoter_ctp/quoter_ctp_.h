@@ -98,6 +98,7 @@ public:
 	void MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_temp );
 
 	void DumpSnapshotFuture();
+
 	void StartNetServer();
 	void OnNetServerInfo( basicx::NetServerInfo& net_server_info_temp );
 	void OnNetServerData( basicx::NetServerData& net_server_data_temp );
