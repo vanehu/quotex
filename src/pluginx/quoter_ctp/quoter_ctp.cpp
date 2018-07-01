@@ -1852,7 +1852,8 @@ QuoterCTP::QuoterCTP()
 	try {
 		m_quoter_ctp_p = new QuoterCTP_P();
 	}
-	catch( ... ) {}
+	catch( ... ) {
+	}
 }
 
 QuoterCTP::~QuoterCTP() {

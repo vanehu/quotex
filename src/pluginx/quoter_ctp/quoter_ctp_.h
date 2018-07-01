@@ -100,8 +100,8 @@ public:
 	void DumpSnapshotFuture();
 
 	void StartNetServer();
-	void OnNetServerInfo( basicx::NetServerInfo& net_server_info_temp );
-	void OnNetServerData( basicx::NetServerData& net_server_data_temp );
+	void OnNetServerInfo( basicx::NetServerInfo& net_server_info_temp ) override;
+	void OnNetServerData( basicx::NetServerData& net_server_data_temp ) override;
 	int32_t gzCompress( Bytef* data_in, uLong size_in, Bytef* data_out, uLong* size_out, int32_t level );
 
 	void HandleUserRequest();
