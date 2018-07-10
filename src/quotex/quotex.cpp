@@ -253,7 +253,7 @@ void SetConsoleWindow() {
 
 	// 更改窗体标题
 	std::string console_title;
-	FormatLibrary::StandardLibrary::FormatTo( console_title, "{0} {1}", DEF_APP_NAME, DEF_APP_VERSION );
+	FormatLibrary::StandardLibrary::FormatTo( console_title, "{0} {1}", THE_APP_NAME, THE_APP_VERSION );
 	SetConsoleTitle( basicx::StringToWideChar( console_title ).c_str() ); // 修改 Console 窗口标题
 }
 
@@ -340,7 +340,7 @@ bool SystemInitialize() {
 int32_t main( int32_t argc, char* argv[] ) {
 	std::string log_info;
 	std::string log_cate = "<SYSTEM_MAIN>";
-	basicx::SysLog_S syslog_s( DEF_APP_NAME ); // 唯一实例 // 01
+	basicx::SysLog_S syslog_s( THE_APP_NAME ); // 唯一实例 // 01
 	basicx::SysLog_S* syslog = basicx::SysLog_S::GetInstance();
 	syslog->SetThreadSafe( false );
 	syslog->SetLocalCache( true );
@@ -348,7 +348,7 @@ int32_t main( int32_t argc, char* argv[] ) {
 	syslog->SetActiveSync( false );
 	syslog->SetWorkThreads( 1 );
 	syslog->SetFileStreamBuffer( DEF_SYSLOG_FSBM_NONE );
-	syslog->InitSysLog( DEF_APP_NAME, DEF_APP_VERSION, DEF_APP_COMPANY, DEF_APP_COPYRIGHT );
+	syslog->InitSysLog( THE_APP_NAME, THE_APP_VERSION, THE_APP_COMPANY, THE_APP_COPYRIGHT );
 	syslog->PrintSysInfo();
 	syslog->WriteSysInfo();
 	basicx::SysCfg_S syscfg_s; // 唯一实例 // 02

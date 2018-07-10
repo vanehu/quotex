@@ -88,15 +88,13 @@ QuoterCTP_P::~QuoterCTP_P() {
 	m_csm_snapshot_future.m_list_one_sub_con_del.clear();
 }
 
-void QuoterCTP_P::SetGlobalPath()
-{
+void QuoterCTP_P::SetGlobalPath() {
 	m_location = m_plugins->GetPluginLocationByName( PLUGIN_NAME );
 	m_cfg_file_path = m_plugins->GetPluginCfgFilePathByName( PLUGIN_NAME );
 	m_info_file_path = m_plugins->GetPluginInfoFilePathByName( PLUGIN_NAME );
 }
 
-bool QuoterCTP_P::ReadConfig( std::string file_path )
-{
+bool QuoterCTP_P::ReadConfig( std::string file_path ) {
 	std::string log_info;
 
 	pugi::xml_document document;
@@ -294,8 +292,7 @@ bool QuoterCTP_P::AssignTask( int32_t task_id, int32_t identity, int32_t code, s
 	return false;
 }
 
-void QuoterCTP_P::CreateService()
-{
+void QuoterCTP_P::CreateService() {
 	std::string log_info;
 
 	log_info = "创建输入输出服务线程完成, 开始进行输入输出服务 ...";
