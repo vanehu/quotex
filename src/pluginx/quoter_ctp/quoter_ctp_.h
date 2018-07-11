@@ -142,8 +142,9 @@ public:
 
 	ConSubMan m_csm_snapshot_future;
 
-	Json::Reader m_json_reader;
-	Json::FastWriter m_json_writer;
+	Json::CharReader* m_json_reader;
+	Json::CharReaderBuilder m_json_reader_builder;
+	Json::StreamWriterBuilder m_json_writer;
 };
 
 class CThostFtdcMdSpiImpl : public CThostFtdcMdSpi

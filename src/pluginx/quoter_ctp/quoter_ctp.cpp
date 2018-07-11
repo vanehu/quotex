@@ -60,6 +60,8 @@ QuoterCTP_P::QuoterCTP_P()
 	, m_user_spi( nullptr )
 	, m_subscribe_ok( false )
 	, m_log_cate( "<Quoter_CTP>" ) {
+	m_json_reader_builder["collectComments"] = false;
+	m_json_reader = m_json_reader_builder.newCharReader();
 	m_syslog = basicx::SysLog_S::GetInstance();
 	m_syscfg = basicx::SysCfg_S::GetInstance();
 	m_sysrtm = basicx::SysRtm_S::GetInstance();
@@ -351,11 +353,13 @@ void QuoterCTP_P::HandleTaskMsg() {
 
 			int32_t ret_func = 0;
 			if( NW_MSG_CODE_JSON == task_item->m_code ) {
-				if( m_json_reader.parse( task_item->m_data, request_temp.m_req_json, false ) ) { // 含中文：std::string strUser = StringToGB2312( jsRootR["user"].asString() );
+
+				std::string errors_json;
+				if( m_json_reader->parse( task_item->m_data.c_str(), task_item->m_data.c_str() + task_item->m_data.length(), &request_temp.m_req_json, &errors_json ) ) { // 含中文：std::string strUser = StringToGB2312( jsRootR["user"].asString() );
 					ret_func = request_temp.m_req_json["function"].asInt();
 				}
 				else {
-					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据 JSON 解析失败！", task_item->m_task_id );
+					FormatLibrary::StandardLibrary::FormatTo( log_info, "处理任务 {0} 时数据 JSON 解析失败！{1}", task_item->m_task_id, errors_json );
 					result_data = OnErrorResult( ret_func, -1, log_info, task_item->m_code );
 				}
 			}
@@ -1233,7 +1237,7 @@ std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 		results_json["ret_info"] = basicx::StringToUTF8( log_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
-		return m_json_writer.write( results_json );
+		return Json::writeString( m_json_writer, results_json );
 	}
 
 	return "";
@@ -1286,7 +1290,7 @@ std::string QuoterCTP_P::OnUserDelSub( Request* request ) {
 		results_json["ret_info"] = basicx::StringToUTF8( log_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
-		return m_json_writer.write( results_json );
+		return Json::writeString( m_json_writer, results_json );
 	}
 
 	return "";
@@ -1469,7 +1473,7 @@ std::string QuoterCTP_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 		results_json["ret_info"] = basicx::StringToUTF8( ret_info ); // 中文 -> 客户端
 		results_json["ret_numb"] = 0;
 		results_json["ret_data"] = "";
-		return m_json_writer.write( results_json );
+		return Json::writeString( m_json_writer, results_json );
 	}
 
 	return "";

@@ -40,7 +40,6 @@
 #define ZLIB_WINAPI // 必须，否则报：无法解析的外部符号
 
 #include "zlib.h"
-#include "json/json.h"
 
 #include <network/server.h>
 
