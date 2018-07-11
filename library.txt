@@ -25,7 +25,7 @@ License: None
 Website: https://github.com/sczybt/CPPFormatLibrary
 
 Library: JsonCpp
-Version: 0.6.0-rc2
+Version: 1.8.4
 License: MIT
 Website: https://github.com/open-source-parsers/jsoncpp
 
