@@ -44,7 +44,7 @@ public:
 public:
 	void SetGlobalPath();
 	bool ReadConfig( std::string file_path );
-	void LogPrint( basicx::syslog_level log_level, std::string& log_cate, std::string& log_info, int32_t log_show = 0 );
+	void LogPrint( basicx::syslog_level log_level, std::string& log_info, int32_t log_show = 0 );
 
 public:
 	bool Initialize();

@@ -102,14 +102,14 @@ bool QuoterCTP_P::ReadConfig( std::string file_path ) {
 	pugi::xml_document document;
 	if( !document.load_file( file_path.c_str() ) ) {
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "打开插件参数配置信息文件失败！{0}", file_path );
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 		return false;
 	}
 
 	pugi::xml_node node_plugin = document.document_element();
 	if( node_plugin.empty() ) {
 		log_info = "获取插件参数配置信息 根节点 失败！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 		return false;
 	}
 	
@@ -125,7 +125,7 @@ bool QuoterCTP_P::ReadConfig( std::string file_path ) {
 				std::string contract = child_node_plugin.attribute( "Contract" ).value();
 				m_vec_contract.push_back( contract );
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0}", contract );
-				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+				LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 			}
 		}
 	}
@@ -164,20 +164,20 @@ bool QuoterCTP_P::ReadConfig( std::string file_path ) {
 
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6} {7}", m_configs.m_address, m_configs.m_broker_id, m_configs.m_username, m_configs.m_password, 
 	//	m_configs.m_sub_list_from, m_configs.m_dump_time, m_configs.m_init_time, m_configs.m_night_time );
-	//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+	//LogPrint( basicx::syslog_level::c_debug, log_info );
 
 	log_info = "插件参数配置信息读取完成。";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	return true;
 }
 
-void QuoterCTP_P::LogPrint( basicx::syslog_level log_level, std::string& log_cate, std::string& log_info, int32_t log_show/* = 0*/ ) {
+void QuoterCTP_P::LogPrint( basicx::syslog_level log_level, std::string& log_info, int32_t log_show/* = 0*/ ) {
 	if( 0 == log_show ) {
-		m_syslog->LogPrint( log_level, log_cate, "LOG>: CTP " + log_info ); // 控制台
-		m_sysrtm->LogTrans( log_level, log_cate, log_info ); // 远程监控
+		m_syslog->LogPrint( log_level, m_log_cate, "LOG>: CTP " + log_info ); // 控制台
+		m_sysrtm->LogTrans( log_level, m_log_cate, log_info ); // 远程监控
 	}
-	m_syslog->LogWrite( log_level, log_cate, log_info );
+	m_syslog->LogWrite( log_level, m_log_cate, log_info );
 }
 
 bool QuoterCTP_P::Initialize() {
@@ -199,7 +199,7 @@ bool QuoterCTP_P::StartPlugin() {
 
 	try {
 		log_info = "开始启用插件 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		if( CheckSingleMutex() == false ) { // 单例限制检测
 		    return false;
@@ -211,7 +211,7 @@ bool QuoterCTP_P::StartPlugin() {
 		// TODO：添加更多初始化任务
 
 		log_info = "插件启用完成。";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		m_plugin_running = true; // 需要在创建线程前赋值为真
 
@@ -219,7 +219,7 @@ bool QuoterCTP_P::StartPlugin() {
 	} // try
 	catch( ... ) {
 		log_info = "插件启用时发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 
 	return false;
@@ -234,12 +234,12 @@ bool QuoterCTP_P::StopPlugin() {
 
 	try {
 		log_info = "开始停止插件 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		// TODO：添加更多反初始化任务
 
 		log_info = "插件停止完成。";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		m_plugin_running = false;
 
@@ -247,7 +247,7 @@ bool QuoterCTP_P::StopPlugin() {
 	} // try
 	catch( ... ) {
 		log_info = "插件停止时发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 
 	return false;
@@ -288,7 +288,7 @@ bool QuoterCTP_P::AssignTask( int32_t task_id, int32_t identity, int32_t code, s
 	catch( std::exception& ex ) {
 		std::string log_info;
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "添加 TaskItem 消息 异常：{0}", ex.what() );
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 
 	return false;
@@ -298,7 +298,7 @@ void QuoterCTP_P::CreateService() {
 	std::string log_info;
 
 	log_info = "创建输入输出服务线程完成, 开始进行输入输出服务 ...";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	try {
 		try {
@@ -318,12 +318,12 @@ void QuoterCTP_P::CreateService() {
 		}
 		catch( std::exception& ex ) {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "输入输出服务 初始化 异常：{0}", ex.what() );
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 	} // try
 	catch( ... ) {
 		log_info = "输入输出服务线程发生未知错误！";
-		LogPrint( basicx::syslog_level::c_fatal, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_fatal, log_info );
 	}
 
 	if( true == m_service_running ) {
@@ -332,7 +332,7 @@ void QuoterCTP_P::CreateService() {
 	}
 
 	log_info = "输入输出服务线程退出！";
-	LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void QuoterCTP_P::HandleTaskMsg() {
@@ -343,7 +343,7 @@ void QuoterCTP_P::HandleTaskMsg() {
 		TaskItem* task_item = &m_list_task.front(); // 肯定有
 
 		//FormatLibrary::StandardLibrary::FormatTo( log_info, "开始处理 {0} 号任务 ...", task_item->m_task_id );
-		//LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		//LogPrint( basicx::syslog_level::c_info, log_info );
 
 		try {
 			Request request_temp;
@@ -406,7 +406,7 @@ void QuoterCTP_P::HandleTaskMsg() {
 		}
 
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "处理 {0} 号任务完成。", task_item->m_task_id );
-		//LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		//LogPrint( basicx::syslog_level::c_info, log_info );
 
 		m_task_list_lock.lock();
 		m_list_task.pop_front();
@@ -419,7 +419,7 @@ void QuoterCTP_P::HandleTaskMsg() {
 	}
 	catch( std::exception& ex ) {
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "处理 TaskItem 消息 异常：{0}", ex.what() );
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
 
@@ -429,7 +429,7 @@ bool QuoterCTP_P::CheckSingleMutex() { // 单例限制检测
 	m_single_mutex = ::CreateMutex( NULL, FALSE, L"quoter_ctp" );
 	if( GetLastError() == ERROR_ALREADY_EXISTS ) {
 		std::string log_info = "在一台服务器上只允许运行本插件一个实例！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 		CloseHandle( m_single_mutex );
 		return false;
 	}
@@ -468,7 +468,7 @@ void QuoterCTP_P::OnTimer() {
 				strftime( time_temp, 32, "%H%M%S", &now_time_t);
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} SnapshotFuture：R:{1}，W:{2}，C:{3}，S:{4}。", 
 					time_temp, m_cache_snapshot_future.m_recv_num.load(), m_cache_snapshot_future.m_dump_num.load(), m_cache_snapshot_future.m_comp_num.load(), m_cache_snapshot_future.m_send_num.load() );
-				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_info, log_info );
 
 				m_cache_snapshot_future.m_dump_num = 0;
 				m_cache_snapshot_future.m_comp_num = 0;
@@ -490,7 +490,7 @@ void QuoterCTP_P::OnTimer() {
 
 					ClearUnavailableConSub( m_csm_snapshot_future, true );
 					log_info = "清理无效订阅。";
-					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+					LogPrint( basicx::syslog_level::c_info, log_info );
 				}
 
 				if( 500 == now_time ) {
@@ -503,18 +503,18 @@ void QuoterCTP_P::OnTimer() {
 	} // try
 	catch( ... ) {
 		log_info = "插件定时线程发生未知错误！";
-		LogPrint( basicx::syslog_level::c_fatal, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_fatal, log_info );
 	}
 
 	log_info = "插件定时线程退出！";
-	LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void QuoterCTP_P::DoReSubscribe() {
 	std::string log_info;
 
 	log_info = "开始行情重新初始化 ....";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	// 重新初始化时不做退订，订阅在重登成功时更新。
 
@@ -534,7 +534,7 @@ void QuoterCTP_P::DoReSubscribe() {
 	m_thread_init_api_spi = boost::make_shared<boost::thread>( boost::bind( &QuoterCTP_P::InitApiSpi, this ) );
 
 	log_info = "行情重新初始化完成。";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 bool QuoterCTP_P::CreateDumpFolder() {
@@ -548,7 +548,7 @@ bool QuoterCTP_P::CreateDumpFolder() {
 	if( INVALID_HANDLE_VALUE == handle_dump_folder ) {
 		FindClose( handle_dump_folder );
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "实时行情数据存储文件夹不存在！{0}", dump_data_folder_path );
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 		return false;
 	}
 	FindClose( handle_dump_folder );
@@ -590,7 +590,7 @@ void QuoterCTP_P::InitQuoteDataFile() {
 		else {
 			std::string log_info;
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotFuture：创建转储文件失败！{0}", m_cache_snapshot_future.m_file_path );
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 	}
 
@@ -608,7 +608,7 @@ void QuoterCTP_P::InitApiSpi() {
 
 	try {
 		log_info = "开始初始化接口 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 		std::string flow_path = m_syscfg->GetPath_ExtFolder() + "\\";
 		m_user_api = CThostFtdcMdApi::CreateFtdcMdApi( flow_path.c_str() );
 		m_user_spi = new CThostFtdcMdSpiImpl( m_user_api, this );
@@ -616,11 +616,11 @@ void QuoterCTP_P::InitApiSpi() {
 		m_user_api->RegisterFront( const_cast<char*>(m_configs.m_address.c_str()) );
 		m_user_api->Init();
 		log_info = "初始化接口完成。等待连接响应 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 	}
 	catch( ... ) {
 		log_info = "初始化接口时发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 
 	if( nullptr != m_user_api ) {
@@ -628,7 +628,7 @@ void QuoterCTP_P::InitApiSpi() {
 	}
 
 	log_info = "接口初始化线程停止阻塞！";
-	LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_warn, log_info );
 
 	// 目前不做退订操作
 	//if( true == m_subscribe_ok ) { // 退订行情
@@ -643,11 +643,11 @@ void QuoterCTP_P::InitApiSpi() {
 	//	int32_t result = m_user_api->UnSubscribeMarketData( contract, contract_number );
 	//	if( 0 == result ) {
 	//	    log_info = "发送行情 退订 请求成功。";
-	//	    LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	//	    LogPrint( basicx::syslog_level::c_info, log_info );
 	//	}
 	//	else {
 	//	    log_info = "发送行情 退订 请求失败！";
-	//	    LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+	//	    LogPrint( basicx::syslog_level::c_error, log_info );
 	//	}
 
 	//	delete[] contract;
@@ -667,7 +667,7 @@ void QuoterCTP_P::InitApiSpi() {
 	//}
 
 	log_info = "接口初始化线程退出！";
-	LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void QuoterCTP_P::GetSubListFromDB() {
@@ -682,11 +682,11 @@ void QuoterCTP_P::GetSubListFromDB() {
 					 and A.LastTradingDate >= CONVERT( VARCHAR( 10 ), GETDATE(), 120 ) order by A.LastTradingDate", m_configs.m_db_database );
 
 	basicx::WinVer windows_version;
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, windows_version.GetVersion() ); // 打印同时取得版本信息
+	LogPrint( basicx::syslog_level::c_info, windows_version.GetVersion() ); // 打印同时取得版本信息
 
 	if( true == windows_version.m_is_win_nt6 ) { // 使用 ADO 连接
 		log_info = "使用 ADO 连接 聚源 数据库。";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		int32_t result = S_OK;
 		ADODB::_Connection* connection = nullptr;
@@ -695,19 +695,19 @@ void QuoterCTP_P::GetSubListFromDB() {
 		result = m_sysdbi_s->Connect( connection, recordset, m_configs.m_db_address, m_configs.m_db_port, m_configs.m_db_username, m_configs.m_db_password, m_configs.m_db_database );
 		if( FAILED( result ) ) {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "连接数据库失败！{0}", result );
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 			return;
 		}
 		else {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "连接数据库成功。{0}", result );
-			LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_info, log_info );
 		}
 
 		if( true == m_sysdbi_s->Query( connection, recordset, sql_query ) ) {
 			int64_t row_number = m_sysdbi_s->GetCount( recordset );
 			if( row_number <= 0 ) {
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "查询获得合约代码记录条数异常！{0}", row_number );
-				LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_error, log_info );
 			}
 			else {
 				while( !m_sysdbi_s->GetEOF( recordset ) ) {
@@ -729,18 +729,18 @@ void QuoterCTP_P::GetSubListFromDB() {
 						}
 						m_vec_contract.push_back( contract_code );
 						FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, exchange_code );
-						LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+						LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 					}
 					m_sysdbi_s->MoveNext( recordset );
 				}
 
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "查询获得合约代码记录 {0} {1} 条。", row_number, m_vec_contract.size() );
-				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_info, log_info );
 			}
 		}
 		else {
 			log_info = "查询合约代码记录失败！";
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 
 		m_sysdbi_s->Close( recordset );
@@ -748,7 +748,7 @@ void QuoterCTP_P::GetSubListFromDB() {
 	}
 	else { // 使用 OTL 连接
 		log_info = "使用 OTL 连接 聚源 数据库。";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		otl_connect connect_otl;
 		otl_connect::otl_initialize(); // 初始化 ODBC 环境
@@ -775,25 +775,25 @@ void QuoterCTP_P::GetSubListFromDB() {
 					}
 					m_vec_contract.push_back( contract_code );
 					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, exchange_code );
-					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+					LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 				}
 				record_number++;
 			}
 
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "查询获得合约代码记录 {0} {1} 条。", record_number, m_vec_contract.size() );
-			LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_info, log_info );
 		}
 		catch( otl_exception& ex ) {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "查询合约代码记录异常！{0} {1} {2} {3}", 
 				std::string( (char*)ex.msg, 1000 ), std::string( ex.stm_text, 2048 ), std::string( (char*)ex.sqlstate, 1000 ), std::string( ex.var_info, 256 ) );
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 
 		connect_otl.logoff(); // 断开 ODBC 连接
 	}
 
 	log_info = "从 数据库 获取合约代码完成。";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表中也没有套利指令合约
@@ -806,7 +806,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 	CThostFtdcTraderSpiImpl* user_spi = nullptr;
 	try {
 		log_info = "开始初始化 合约查询 接口 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 		std::string flow_path = m_syscfg->GetPath_ExtFolder() + "\\";
 		user_api = CThostFtdcTraderApi::CreateFtdcTraderApi( flow_path.c_str() );
 		user_spi = new CThostFtdcTraderSpiImpl( user_api, this );
@@ -816,7 +816,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 		user_spi->m_connect_ok = false;
 		user_api->Init();
 		log_info = "初始化 合约查询 接口完成。等待连接响应 ....";
-		LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_info, log_info );
 
 		int32_t time_wait = 0;
 		while( false == user_spi->m_connect_ok && time_wait < 5000 ) { // 最多等待 5 秒
@@ -825,21 +825,21 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 		}
 		if( false == user_spi->m_connect_ok ) {
 			log_info = "交易前置 连接超时！";
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 		else {
 			log_info = "交易前置 连接完成。";
-			LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_info, log_info );
 
 			// 登录操作
 			result = user_spi->ReqUserLogin( m_configs.m_qc_broker_id, m_configs.m_qc_username, m_configs.m_qc_password );
 			if( result != 0 ) { // -1、-2、-3
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录请求失败！{0}", result );
-				LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_error, log_info );
 			}
 			else {
 				log_info = "用户登录 提交成功。";
-				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_info, log_info );
 
 				int32_t time_wait = 0;
 				while( false == user_spi->m_login_ok && time_wait < 5000 ) { // 最多等待 5 秒
@@ -853,21 +853,21 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 			if( false == user_spi->m_login_ok ) {
 				std::string error_msg = user_spi->GetLastErrorMsg();
 				FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录时 登录失败！{0}", error_msg );
-				LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_error, log_info );
 			}
 			else {
 				log_info = "交易柜台 登录完成。";
-				LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				LogPrint( basicx::syslog_level::c_info, log_info );
 
 				// 查询操作
 				result = user_spi->ReqQryInstrument();
 				if( result != 0 ) { // -1、-2、-3
 					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约查询 提交失败！{0}", result );
-					LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+					LogPrint( basicx::syslog_level::c_error, log_info );
 				}
 				else {
 					log_info = "合约查询 提交成功。";
-					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+					LogPrint( basicx::syslog_level::c_info, log_info );
 
 					int32_t time_wait = 0;
 					while( false == user_spi->m_qry_instrument && time_wait < 5000 ) { // 最多等待 5 秒
@@ -877,22 +877,22 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 				}
 				if( false == user_spi->m_qry_instrument ) {
 					log_info = "合约查询超时！";
-					LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+					LogPrint( basicx::syslog_level::c_error, log_info );
 				}
 				else {
 					FormatLibrary::StandardLibrary::FormatTo( log_info, "合约查询成功。共计 {0} 个。", m_vec_contract.size() );
-					LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+					LogPrint( basicx::syslog_level::c_info, log_info );
 				}
 
 				// 登出操作 // 可以不做，执行 ReqUserLogout 操作会显示会话断开和前置连接中断(00001001)，但如果不 Release 依然会发心跳消息
 				//result = user_spi->ReqUserLogout( m_configs.m_qc_broker_id, m_configs.m_qc_username );
 				//if( result != 0 ) { //-1、-2、-3
 				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出请求失败！{0}", result );
-				//	LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+				//	LogPrint( basicx::syslog_level::c_error, log_info );
 				//}
 				//else {
 				//	log_info = "用户登出 提交成功。";
-				//	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				//	LogPrint( basicx::syslog_level::c_info, log_info );
 
 				//	int32_t time_wait = 0;
 				//	while( false == user_spi->m_logout_ok && time_wait < 5000 ) { // 最多等待 5 秒
@@ -906,11 +906,11 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 				//if( false == user_spi->m_logout_ok ) {
 				//	std::string error_msg = user_spi->GetLastErrorMsg();
 				//	FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出时 登出失败！{0}", error_msg );
-				//	LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+				//	LogPrint( basicx::syslog_level::c_error, log_info );
 				//}
 				//else {
 				//	log_info = "上期柜台 登出完成。";
-				//	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+				//	LogPrint( basicx::syslog_level::c_info, log_info );
 				//}
 			}
 		}
@@ -919,7 +919,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 	}
 	catch( ... ) {
 		log_info = "从上期平台获取合约代码时发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 
 	if( user_api != nullptr ) {
@@ -930,7 +930,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 	}
 
 	log_info = "从 上期平台 获取合约代码完成。";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 void QuoterCTP_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_temp ) {
@@ -1019,7 +1019,7 @@ void QuoterCTP_P::DumpSnapshotFuture() {
 		}
 		else {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotFuture：打开转储文件失败！{0}", m_cache_snapshot_future.m_file_path );
-			LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 	}
 }
@@ -1078,7 +1078,7 @@ void QuoterCTP_P::OnNetServerData( basicx::NetServerData& net_server_data_temp )
 	}
 	catch( ... ) {
 		std::string log_info = "转发网络数据 发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
 
@@ -1136,7 +1136,7 @@ void QuoterCTP_P::HandleUserRequest() {
 	std::string log_info;
 
 	log_info = "创建用户请求处理线程完成, 开始进行用户请求处理 ...";
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	try {
 		while( 1 ) {
@@ -1177,11 +1177,11 @@ void QuoterCTP_P::HandleUserRequest() {
 	} // try
 	catch( ... ) {
 		log_info = "用户请求处理线程发生未知错误！";
-		LogPrint( basicx::syslog_level::c_fatal, m_log_cate, log_info );
+		LogPrint( basicx::syslog_level::c_fatal, log_info );
 	}
 
 	log_info = "用户请求处理线程退出！";
-	LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
@@ -1228,7 +1228,7 @@ std::string QuoterCTP_P::OnUserAddSub( Request* request ) {
 	}
 
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情订阅成功。{0}", quote_type );
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	if( NW_MSG_CODE_JSON == request->m_code ) {
 		Json::Value results_json;
@@ -1281,7 +1281,7 @@ std::string QuoterCTP_P::OnUserDelSub( Request* request ) {
 	}
 
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "行情退订成功。{0}", quote_type );
-	LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	LogPrint( basicx::syslog_level::c_info, log_info );
 
 	if( NW_MSG_CODE_JSON == request->m_code ) {
 		Json::Value results_json;
@@ -1303,7 +1303,7 @@ void QuoterCTP_P::AddConSubAll( ConSubMan& csm_con_sub_man, int32_t identity, ba
 
 	//std::string log_info;
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "订阅 全市场：{0}", identity );
-	//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+	//LogPrint( basicx::syslog_level::c_debug, log_info );
 }
 
 void QuoterCTP_P::DelConSubAll( ConSubMan& csm_con_sub_man, int32_t identity ) {
@@ -1313,7 +1313,7 @@ void QuoterCTP_P::DelConSubAll( ConSubMan& csm_con_sub_man, int32_t identity ) {
 
 	//std::string log_info;
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "退订 全市场：{0}", identity );
-	//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+	//LogPrint( basicx::syslog_level::c_debug, log_info );
 }
 
 bool QuoterCTP_P::IsConSubAll( ConSubMan& csm_con_sub_man, int32_t identity ) {
@@ -1346,7 +1346,7 @@ void QuoterCTP_P::AddConSubOne( ConSubMan& csm_con_sub_man, std::string& code, i
 
 	//std::string log_info;
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "订阅 单证券：{0} {1}", code, identity );
-	//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+	//LogPrint( basicx::syslog_level::c_debug, log_info );
 }
 
 void QuoterCTP_P::DelConSubOne( ConSubMan& csm_con_sub_man, std::string& code, int32_t identity ) {
@@ -1367,7 +1367,7 @@ void QuoterCTP_P::DelConSubOne( ConSubMan& csm_con_sub_man, std::string& code, i
 
 		//std::string log_info;
 		//FormatLibrary::StandardLibrary::FormatTo( log_info, "退订 单证券：{0} {1}", code, identity );
-		//LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+		//LogPrint( basicx::syslog_level::c_debug, log_info );
 	}
 	csm_con_sub_man.m_lock_con_sub_one.unlock();
 }
@@ -1464,7 +1464,7 @@ void QuoterCTP_P::CommitResult( int32_t task_id, int32_t identity, int32_t code,
 }
 
 std::string QuoterCTP_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std::string ret_info, int32_t encode ) {
-	LogPrint( basicx::syslog_level::c_error, m_log_cate, ret_info );
+	LogPrint( basicx::syslog_level::c_error, ret_info );
 
 	if( NW_MSG_CODE_JSON == encode ) {
 		Json::Value results_json;
@@ -1494,7 +1494,7 @@ void CThostFtdcMdSpiImpl::OnFrontConnected() {
 	std::string log_info;
 
 	log_info = "连接成功。尝试行情登录 ....";
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 
 	CThostFtdcReqUserLoginField req_user_login;
 	memset( &req_user_login, 0, sizeof( req_user_login ) );
@@ -1504,11 +1504,11 @@ void CThostFtdcMdSpiImpl::OnFrontConnected() {
 	int32_t result = m_user_api->ReqUserLogin( &req_user_login, 0 );
 	if( 0 == result ) {
 		log_info = "发送行情 登录 请求成功。";
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 	}
 	else {
 		log_info = "发送行情 登录 请求失败！";
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
 
@@ -1516,27 +1516,27 @@ void CThostFtdcMdSpiImpl::OnFrontDisconnected( int nReason ) {
 	// 当发生这个情况后，API会自动重新连接，客户端可不做处理
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "连接断开：Reason:{0}", nReason );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void CThostFtdcMdSpiImpl::OnHeartBeatWarning( int nTimeLapse ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "心跳警告：TimeLapse:{0}", nTimeLapse );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "登录反馈：ErrorID:{0} ErrorMsg:{1} RequestID:{2} Chain:{3}", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 
 	if( pRspInfo->ErrorID != 0 ) { // 这里是否隔几秒以后发起重登？
 		log_info = "行情登录失败！";
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 	else {
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "行情登录成功。当前交易日：{0}，尝试行情订阅 ....", pRspUserLogin->TradingDay );
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 
 		// 指定 JYDB 或 CTP 会将 m_vec_contract 刷新，指定 USER 则 m_vec_contract 不变
 		if( "JYDB" == m_quoter_ctp_p->m_configs.m_sub_list_from ) {
@@ -1548,7 +1548,7 @@ void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserL
 
 		if( 0 == m_quoter_ctp_p->m_vec_contract.size() ) {
 			log_info = "需要订阅行情的合约个数为零！";
-			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 			return;
 		}
 
@@ -1563,12 +1563,12 @@ void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserL
 		if( 0 == result ) {
 			m_quoter_ctp_p->m_subscribe_ok = true;
 			log_info = "发送行情 订阅 请求成功。";
-			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 		}
 		else {
 			m_quoter_ctp_p->m_subscribe_ok = false;
 			log_info = "发送行情 订阅 请求失败！";
-			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 
 		delete[] contract;
@@ -1578,26 +1578,26 @@ void CThostFtdcMdSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspUserL
 void CThostFtdcMdSpiImpl::OnRspUserLogout( CThostFtdcUserLogoutField* pUserLogout, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "登出反馈：ErrorID:{0} ErrorMsg:{1} RequestID:{2} Chain:{3}", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 void CThostFtdcMdSpiImpl::OnRspError( CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "异常反馈：ErrorID:{0} ErrorMsg:{1} RequestID:{2} Chain:{3}", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void CThostFtdcMdSpiImpl::OnRspSubMarketData( CThostFtdcSpecificInstrumentField* pSpecificInstrument, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "订阅反馈：ErrorID:{0} ErrorMsg:{1} RequestID:{2} Chain:{3}", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 	m_quoter_ctp_p->m_subscribe_count++; // 这里可以区分下是否订阅成功
 }
 
 void CThostFtdcMdSpiImpl::OnRspUnSubMarketData( CThostFtdcSpecificInstrumentField* pSpecificInstrument, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "退订反馈：ErrorID:{0} ErrorMsg:{1} RequestID:{2} Chain:{3}", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 	m_quoter_ctp_p->m_subscribe_count--; // 这里可以区分下是否退订成功
 }
 
@@ -1675,7 +1675,7 @@ void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* 
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "行情反馈：合约:{0} 市场:{1} 现价:{2} 最高价:{3} 最低价:{4} 卖一价:{5} 卖一量:{6} 买一价:{7} 买一量:{8}", 
 	//	pDepthMarketData->InstrumentID, pDepthMarketData->ExchangeID, pDepthMarketData->LastPrice, pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, 
 	//	pDepthMarketData->AskPrice1, pDepthMarketData->AskVolume1, pDepthMarketData->BidPrice1, pDepthMarketData->BidVolume1 );
-	//m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_debug, m_log_cate, log_info );
+	//m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_debug, log_info );
 }
 
 CThostFtdcTraderSpiImpl::CThostFtdcTraderSpiImpl( CThostFtdcTraderApi* user_api, QuoterCTP_P* quoter_ctp_p )
@@ -1701,7 +1701,7 @@ void CThostFtdcTraderSpiImpl::OnFrontConnected() {
 
 	std::string log_info;
 	log_info = "交易前置连接成功。";
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 void CThostFtdcTraderSpiImpl::OnFrontDisconnected( int nReason ) { // CTP的API会自动重新连接
@@ -1709,13 +1709,13 @@ void CThostFtdcTraderSpiImpl::OnFrontDisconnected( int nReason ) { // CTP的API会
 
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "交易前置连接中断！{0}", nReason );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void CThostFtdcTraderSpiImpl::OnHeartBeatWarning( int nTimeLapse ) {
 	std::string log_info;
 	FormatLibrary::StandardLibrary::FormatTo( log_info, "心跳超时警告！{0}", nTimeLapse );
-	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, m_log_cate, log_info );
+	m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 int32_t CThostFtdcTraderSpiImpl::ReqUserLogin( std::string broker_id, std::string user_id, std::string password ) {
@@ -1743,7 +1743,7 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspU
 		m_last_error_msg = pRspInfo->ErrorMsg;
 		m_last_rsp_is_error = true;
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录失败！{0}", m_last_error_msg );
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 	else {
 		m_login_ok = true; // 只用于首次登录成功标记
@@ -1760,7 +1760,7 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogin( CThostFtdcRspUserLoginField* pRspU
 		//pRspUserLogin->CZCETime; // 郑商所时间 char 9
 		//pRspUserLogin->FFEXTime; // 中金所时间 char 9
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登录成功。当前交易日：{0}", pRspUserLogin->TradingDay );
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 	}
 }
 
@@ -1781,14 +1781,14 @@ void CThostFtdcTraderSpiImpl::OnRspUserLogout( CThostFtdcUserLogoutField* pUserL
 		m_last_error_msg = pRspInfo->ErrorMsg;
 		m_last_rsp_is_error = true;
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出失败！{0}", m_last_error_msg );
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 	else {
 		m_logout_ok = true; // 只用于末次登出成功标记
 		//pUserLogout->BrokerID; // 经纪公司代码 char 11
 		//pUserLogout->UserID; // 用户代码 char 16
 		FormatLibrary::StandardLibrary::FormatTo( log_info, "用户登出成功。{0} {1}", pUserLogout->BrokerID, pUserLogout->UserID );
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info );
 	}
 }
 
@@ -1814,7 +1814,7 @@ void CThostFtdcTraderSpiImpl::OnRspQryInstrument( CThostFtdcInstrumentField* pIn
 		else {
 			log_info = "期货合约查询提交失败！原因未知！";
 		}
-		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, m_log_cate, log_info );
+		m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 	else {
 		if( true == bIsLast ) { //
@@ -1826,7 +1826,7 @@ void CThostFtdcTraderSpiImpl::OnRspQryInstrument( CThostFtdcInstrumentField* pIn
 		if( contract_code != "" && contract_code.length() < 8 ) { // 有些测试环境(永安期货)会查询到类似 IO1402-C-2550 这样的代码导致行情接收时代码字段溢出崩溃
 			m_quoter_ctp_p->m_vec_contract.push_back( contract_code );
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "合约代码：{0} {1}", contract_code, exchange_id );
-			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, m_log_cate, log_info, FILE_LOG_ONLY );
+			m_quoter_ctp_p->LogPrint( basicx::syslog_level::c_info, log_info, FILE_LOG_ONLY );
 		}
 	}
 }
