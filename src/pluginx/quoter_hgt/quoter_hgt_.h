@@ -89,9 +89,9 @@ public:
 	void InitQuoteDataFile();
 	void InitApiSpi();
 
-	void MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_temp );
+	void MS_AddData_SnapshotStock( SnapshotStock_HGT& snapshot_stock_temp );
 
-	void DumpSnapshotFuture();
+	void DumpSnapshotStock();
 
 	void StartNetServer();
 	void OnNetServerInfo( basicx::NetServerInfo& net_server_info_temp ) override;
@@ -119,24 +119,26 @@ public:
 	std::vector<std::string> m_vec_contract;
 	int32_t m_subscribe_count;
 	
-	QuoteCache<SnapshotFuture> m_cache_snapshot_future;
+	QuoteCache<SnapshotStock_HGT> m_cache_snapshot_stock;
 
 	int32_t m_data_encode;
 	int32_t m_data_compress;
 	net_server_ptr m_net_server_broad;
 	net_server_ptr m_net_server_query;
-	uint32_t m_output_buf_len_snapshot_future;
-	unsigned char* m_output_buf_snapshot_future;
+	uint32_t m_output_buf_len_snapshot_stock;
+	unsigned char* m_output_buf_snapshot_stock;
 
 	thread_ptr m_thread_user_request;
 	boost::mutex m_user_request_list_lock;
 	std::list<Request> m_list_user_request;
 
-	ConSubMan m_csm_snapshot_future;
+	ConSubMan m_csm_snapshot_stock;
 
 	Json::CharReader* m_json_reader;
 	Json::CharReaderBuilder m_json_reader_builder;
 	Json::StreamWriterBuilder m_json_writer;
+
+	std::string m_market_data_file_path;
 };
 
 #endif // QUOTER_HGT_QUOTER_HGT_P_H

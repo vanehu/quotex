@@ -22,7 +22,6 @@
 #include <fstream>
 #include <algorithm> // transform
 
-#include <common/assist.h>
 #include <common/winver.h>
 #include <common/common.h>
 #include <syslog/syslog.h>
@@ -50,6 +49,7 @@ QuoterHGT_P::QuoterHGT_P()
 	, m_plugin_running( false )
 	, m_task_id( 0 )
 	, m_subscribe_ok( false )
+	, m_market_data_file_path( "" )
 	, m_log_cate( "<Quoter_HGT>" ) {
 	m_json_reader_builder["collectComments"] = false;
 	m_json_reader = m_json_reader_builder.newCharReader();
@@ -60,24 +60,24 @@ QuoterHGT_P::QuoterHGT_P()
 }
 
 QuoterHGT_P::~QuoterHGT_P() {
-	if( m_output_buf_snapshot_future != nullptr ) {
-		delete[] m_output_buf_snapshot_future;
-		m_output_buf_snapshot_future = nullptr;
+	if( m_output_buf_snapshot_stock != nullptr ) {
+		delete[] m_output_buf_snapshot_stock;
+		m_output_buf_snapshot_stock = nullptr;
 	}
 
-	for( auto it = m_csm_snapshot_future.m_map_con_sub_one.begin(); it != m_csm_snapshot_future.m_map_con_sub_one.end(); it++ ) {
+	for( auto it = m_csm_snapshot_stock.m_map_con_sub_one.begin(); it != m_csm_snapshot_stock.m_map_con_sub_one.end(); it++ ) {
 		if( it->second != nullptr ) {
 			delete it->second;
 		}
 	}
-	m_csm_snapshot_future.m_map_con_sub_one.clear();
+	m_csm_snapshot_stock.m_map_con_sub_one.clear();
 
-	for( auto it = m_csm_snapshot_future.m_list_one_sub_con_del.begin(); it != m_csm_snapshot_future.m_list_one_sub_con_del.end(); it++ ) {
+	for( auto it = m_csm_snapshot_stock.m_list_one_sub_con_del.begin(); it != m_csm_snapshot_stock.m_list_one_sub_con_del.end(); it++ ) {
 		if( (*it) != nullptr ) {
 			delete (*it);
 		}
 	}
-	m_csm_snapshot_future.m_list_one_sub_con_del.clear();
+	m_csm_snapshot_stock.m_list_one_sub_con_del.clear();
 }
 
 void QuoterHGT_P::SetGlobalPath() {
@@ -103,6 +103,9 @@ bool QuoterHGT_P::ReadConfig( std::string file_path ) {
 		return false;
 	}
 	
+	m_configs.m_market_data_folder = node_plugin.child_value( "MarketDataFolder" );
+	m_market_data_file_path = m_configs.m_market_data_folder + "\\mktdt04.txt";
+
 	m_configs.m_address = node_plugin.child_value( "Address" );
 	m_configs.m_broker_id = node_plugin.child_value( "BrokerID" );
 	m_configs.m_username = node_plugin.child_value( "Username" );
@@ -115,8 +118,8 @@ bool QuoterHGT_P::ReadConfig( std::string file_path ) {
 	m_configs.m_dump_time = atoi( node_plugin.child_value( "DumpTime" ) );
 	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
 
-	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6}", m_configs.m_address, m_configs.m_broker_id, m_configs.m_username, m_configs.m_password, 
-	//	m_configs.m_sub_list_from, m_configs.m_dump_time, m_configs.m_init_time );
+	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6}", m_configs.m_market_data_folder, 
+	//	m_configs.m_address, m_configs.m_broker_id, m_configs.m_username, m_configs.m_password, m_configs.m_dump_time, m_configs.m_init_time );
 	//LogPrint( basicx::syslog_level::c_debug, log_info );
 
 	log_info = "插件参数配置信息读取完成。";
@@ -404,12 +407,12 @@ void QuoterHGT_P::OnTimer() {
 					Sleep( 1000 );
 					//if( 前置行情服务器启动 )
 					//{
-					//	DumpSnapshotFuture();
+					//	DumpSnapshotStock();
 					//	force_dump = true;
 					//}
 				}
 				if( false == force_dump ) {
-					DumpSnapshotFuture();
+					DumpSnapshotStock();
 				}
 				force_dump = false;
 
@@ -418,13 +421,13 @@ void QuoterHGT_P::OnTimer() {
 
 				char time_temp[32];
 				strftime( time_temp, 32, "%H%M%S", &now_time_t);
-				FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} SnapshotFuture：R:{1}，W:{2}，C:{3}，S:{4}。", 
-					time_temp, m_cache_snapshot_future.m_recv_num.load(), m_cache_snapshot_future.m_dump_num.load(), m_cache_snapshot_future.m_comp_num.load(), m_cache_snapshot_future.m_send_num.load() );
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} SnapshotStock：R:{1}，W:{2}，C:{3}，S:{4}。", 
+					time_temp, m_cache_snapshot_stock.m_recv_num.load(), m_cache_snapshot_stock.m_dump_num.load(), m_cache_snapshot_stock.m_comp_num.load(), m_cache_snapshot_stock.m_send_num.load() );
 				LogPrint( basicx::syslog_level::c_info, log_info );
 
-				m_cache_snapshot_future.m_dump_num = 0;
-				m_cache_snapshot_future.m_comp_num = 0;
-				m_cache_snapshot_future.m_send_num = 0;
+				m_cache_snapshot_stock.m_dump_num = 0;
+				m_cache_snapshot_stock.m_comp_num = 0;
+				m_cache_snapshot_stock.m_send_num = 0;
 
 				if( now_time == m_configs.m_init_time && false == do_resubscribe ) {
 					DoReSubscribe();
@@ -435,7 +438,7 @@ void QuoterHGT_P::OnTimer() {
 					InitQuoteDataFile();
 					init_quote_data_file = true;
 
-					ClearUnavailableConSub( m_csm_snapshot_future, true );
+					ClearUnavailableConSub( m_csm_snapshot_stock, true );
 					log_info = "清理无效订阅。";
 					LogPrint( basicx::syslog_level::c_info, log_info );
 				}
@@ -488,11 +491,11 @@ bool QuoterHGT_P::CreateDumpFolder() {
 	}
 	FindClose( handle_dump_folder );
 
-	dump_data_folder_path += "\\Future";
+	dump_data_folder_path += "\\Stock";
 	CreateDirectoryA( dump_data_folder_path.c_str(), NULL );
 
-	m_cache_snapshot_future.m_folder_path = dump_data_folder_path + "\\Market";
-	CreateDirectoryA( m_cache_snapshot_future.m_folder_path.c_str(), NULL );
+	m_cache_snapshot_stock.m_folder_path = dump_data_folder_path + "\\Market";
+	CreateDirectoryA( m_cache_snapshot_stock.m_folder_path.c_str(), NULL );
 
 	InitQuoteDataFile(); // 首次启动时
 
@@ -503,37 +506,37 @@ void QuoterHGT_P::InitQuoteDataFile() {
 	char date_temp[9];
 	tm now_time_t = basicx::GetNowTime();
 	strftime( date_temp, 9, "%Y%m%d", &now_time_t);
-	FormatLibrary::StandardLibrary::FormatTo( m_cache_snapshot_future.m_file_path, "{0}\\{1}.hq", m_cache_snapshot_future.m_folder_path, date_temp );
+	FormatLibrary::StandardLibrary::FormatTo( m_cache_snapshot_stock.m_file_path, "{0}\\{1}.hq", m_cache_snapshot_stock.m_folder_path, date_temp );
 
 	bool is_new_file = false;
 	WIN32_FIND_DATA find_file_temp;
-	HANDLE handle_find_file = FindFirstFile( basicx::StringToWideChar( m_cache_snapshot_future.m_file_path ).c_str(), &find_file_temp );
+	HANDLE handle_find_file = FindFirstFile( basicx::StringToWideChar( m_cache_snapshot_stock.m_file_path ).c_str(), &find_file_temp );
 	if( INVALID_HANDLE_VALUE == handle_find_file ) { // 数据文件不存在
 		is_new_file = true;
 	}
 	FindClose( handle_find_file );
 
 	if( true == is_new_file ) { // 创建并写入 32 字节文件头部
-		std::ofstream file_snapshot_future;
-		file_snapshot_future.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
-		if( file_snapshot_future ) {
+		std::ofstream file_snapshot_stock;
+		file_snapshot_stock.open( m_cache_snapshot_stock.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
+		if( file_snapshot_stock ) {
 			char head_temp[32] = { 0 };
-			head_temp[0] = SNAPSHOT_FUTURE_VERSION; // 结构体版本
-			file_snapshot_future.write( head_temp, 32 );
-			file_snapshot_future.close();
+			head_temp[0] = SNAPSHOT_STOCK_HGT_VERSION; // 结构体版本
+			file_snapshot_stock.write( head_temp, 32 );
+			file_snapshot_stock.close();
 		}
 		else {
 			std::string log_info;
-			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotFuture：创建转储文件失败！{0}", m_cache_snapshot_future.m_file_path );
+			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotStock：创建转储文件失败！{0}", m_cache_snapshot_stock.m_file_path );
 			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 	}
 
-	m_cache_snapshot_future.m_recv_num = 0;
-	m_cache_snapshot_future.m_dump_num = 0;
-	m_cache_snapshot_future.m_comp_num = 0;
-	m_cache_snapshot_future.m_send_num = 0;
-	m_cache_snapshot_future.m_local_index = 0;
+	m_cache_snapshot_stock.m_recv_num = 0;
+	m_cache_snapshot_stock.m_dump_num = 0;
+	m_cache_snapshot_stock.m_comp_num = 0;
+	m_cache_snapshot_stock.m_send_num = 0;
+	m_cache_snapshot_stock.m_local_index = 0;
 }
 
 void QuoterHGT_P::InitApiSpi() {
@@ -596,38 +599,38 @@ void QuoterHGT_P::InitApiSpi() {
 	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
-void QuoterHGT_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_temp ) {
+void QuoterHGT_P::MS_AddData_SnapshotStock( SnapshotStock_HGT& snapshot_stock_temp ) {
 	//if( m_net_server_broad->Server_GetConnectCount() > 0 )
-	if( m_csm_snapshot_future.m_map_con_sub_all.size() > 0 || m_csm_snapshot_future.m_map_con_sub_one.size() > 0 ) { // 全市场和单证券可以分别压缩以减少CPU压力提高效率，但一般还是全市场订阅的多
-		int32_t output_buf_len_snapshot_future = m_output_buf_len_snapshot_future; // 必须每次重新赋值，否则压缩出错
-		memset( m_output_buf_snapshot_future, 0, m_output_buf_len_snapshot_future );
-		int32_t result = gzCompress( (unsigned char*)&snapshot_future_temp, sizeof( snapshot_future_temp ), m_output_buf_snapshot_future, (uLongf*)&output_buf_len_snapshot_future, m_data_compress );
+	if( m_csm_snapshot_stock.m_map_con_sub_all.size() > 0 || m_csm_snapshot_stock.m_map_con_sub_one.size() > 0 ) { // 全市场和单证券可以分别压缩以减少CPU压力提高效率，但一般还是全市场订阅的多
+		int32_t output_buf_len_snapshot_stock = m_output_buf_len_snapshot_stock; // 必须每次重新赋值，否则压缩出错
+		memset( m_output_buf_snapshot_stock, 0, m_output_buf_len_snapshot_stock );
+		int32_t result = gzCompress( (unsigned char*)&snapshot_stock_temp, sizeof( snapshot_stock_temp ), m_output_buf_snapshot_stock, (uLongf*)&output_buf_len_snapshot_stock, m_data_compress );
 		if( Z_OK == result ) { // 数据已压缩
-			m_cache_snapshot_future.m_comp_num++;
-			std::string quote_data( (char*)m_output_buf_snapshot_future, output_buf_len_snapshot_future );
-			quote_data = TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP_HEAD + quote_data;
+			m_cache_snapshot_stock.m_comp_num++;
+			std::string quote_data( (char*)m_output_buf_snapshot_stock, output_buf_len_snapshot_stock );
+			quote_data = TD_FUNC_QUOTE_DATA_TRANSACTION_HGT_HEAD + quote_data;
 
 			// 先给全市场的吧，全市场订阅者可能还要自己进行过滤
 
 			{ // 广播给全市场订阅者
-				m_csm_snapshot_future.m_lock_con_sub_all.lock();
-				std::map<int32_t, basicx::ConnectInfo*> map_con_sub_all = m_csm_snapshot_future.m_map_con_sub_all;
-				m_csm_snapshot_future.m_lock_con_sub_all.unlock();
+				m_csm_snapshot_stock.m_lock_con_sub_all.lock();
+				std::map<int32_t, basicx::ConnectInfo*> map_con_sub_all = m_csm_snapshot_stock.m_map_con_sub_all;
+				m_csm_snapshot_stock.m_lock_con_sub_all.unlock();
 
 				for( auto it = map_con_sub_all.begin(); it != map_con_sub_all.end(); it++ ) {
 					if( true == m_net_server_broad->IsConnectAvailable( it->second ) ) {
 						m_net_server_broad->Server_SendData( it->second, NW_MSG_TYPE_USER_DATA, m_data_encode, quote_data );
-						m_cache_snapshot_future.m_send_num++;
+						m_cache_snapshot_stock.m_send_num++;
 					}
 				}
 			}
 
 			{ // 广播给单证券订阅者
-				m_csm_snapshot_future.m_lock_con_sub_one.lock();
-				std::map<std::string, ConSubOne*> map_con_sub_one = m_csm_snapshot_future.m_map_con_sub_one;
-				m_csm_snapshot_future.m_lock_con_sub_one.unlock();
+				m_csm_snapshot_stock.m_lock_con_sub_one.lock();
+				std::map<std::string, ConSubOne*> map_con_sub_one = m_csm_snapshot_stock.m_map_con_sub_one;
+				m_csm_snapshot_stock.m_lock_con_sub_one.unlock();
 
-				std::map<std::string, ConSubOne*>::iterator it_cso = map_con_sub_one.find( snapshot_future_temp.m_code );
+				std::map<std::string, ConSubOne*>::iterator it_cso = map_con_sub_one.find( snapshot_stock_temp.m_SecurityID );
 				if( it_cso != map_con_sub_one.end() ) {
 					ConSubOne* con_sub_one = it_cso->second; // 运行期间 con_sub_one 所指对象不会被删除
 
@@ -638,7 +641,7 @@ void QuoterHGT_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_tem
 					for( auto it = map_identity.begin(); it != map_identity.end(); it++ ) {
 						if( true == m_net_server_broad->IsConnectAvailable( it->second ) ) {
 							m_net_server_broad->Server_SendData( it->second, NW_MSG_TYPE_USER_DATA, m_data_encode, quote_data );
-							m_cache_snapshot_future.m_send_num++;
+							m_cache_snapshot_stock.m_send_num++;
 						}
 					}
 				}
@@ -647,41 +650,41 @@ void QuoterHGT_P::MS_AddData_SnapshotFuture( SnapshotFuture& snapshot_future_tem
 	}
 
 	if( 1 == m_configs.m_need_dump ) {
-		m_cache_snapshot_future.m_lock_cache.lock();
-		m_cache_snapshot_future.m_vec_cache_put->push_back( snapshot_future_temp );
-		m_cache_snapshot_future.m_lock_cache.unlock();
+		m_cache_snapshot_stock.m_lock_cache.lock();
+		m_cache_snapshot_stock.m_vec_cache_put->push_back( snapshot_stock_temp );
+		m_cache_snapshot_stock.m_lock_cache.unlock();
 	}
 }
 
-void QuoterHGT_P::DumpSnapshotFuture() {
+void QuoterHGT_P::DumpSnapshotStock() {
 	std::string log_info;
 
-	m_cache_snapshot_future.m_lock_cache.lock();
-	if( m_cache_snapshot_future.m_vec_cache_put == &m_cache_snapshot_future.m_vec_cache_01 ) {
-		m_cache_snapshot_future.m_vec_cache_put = &m_cache_snapshot_future.m_vec_cache_02;
-		m_cache_snapshot_future.m_vec_cache_put->clear();
-		m_cache_snapshot_future.m_vec_cache_out = &m_cache_snapshot_future.m_vec_cache_01;
+	m_cache_snapshot_stock.m_lock_cache.lock();
+	if( m_cache_snapshot_stock.m_vec_cache_put == &m_cache_snapshot_stock.m_vec_cache_01 ) {
+		m_cache_snapshot_stock.m_vec_cache_put = &m_cache_snapshot_stock.m_vec_cache_02;
+		m_cache_snapshot_stock.m_vec_cache_put->clear();
+		m_cache_snapshot_stock.m_vec_cache_out = &m_cache_snapshot_stock.m_vec_cache_01;
 	}
 	else {
-		m_cache_snapshot_future.m_vec_cache_put = &m_cache_snapshot_future.m_vec_cache_01;
-		m_cache_snapshot_future.m_vec_cache_put->clear();
-		m_cache_snapshot_future.m_vec_cache_out = &m_cache_snapshot_future.m_vec_cache_02;
+		m_cache_snapshot_stock.m_vec_cache_put = &m_cache_snapshot_stock.m_vec_cache_01;
+		m_cache_snapshot_stock.m_vec_cache_put->clear();
+		m_cache_snapshot_stock.m_vec_cache_out = &m_cache_snapshot_stock.m_vec_cache_02;
 	}
-	m_cache_snapshot_future.m_lock_cache.unlock();
+	m_cache_snapshot_stock.m_lock_cache.unlock();
 
-	size_t out_data_number = m_cache_snapshot_future.m_vec_cache_out->size();
+	size_t out_data_number = m_cache_snapshot_stock.m_vec_cache_out->size();
 	if( out_data_number > 0 ) { // 避免无新数据时操作文件
-		std::ofstream file_snapshot_future;
-		file_snapshot_future.open( m_cache_snapshot_future.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
-		if( file_snapshot_future ) {
+		std::ofstream file_snapshot_stock;
+		file_snapshot_stock.open( m_cache_snapshot_stock.m_file_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app );
+		if( file_snapshot_stock ) {
 			for( size_t i = 0; i < out_data_number; ++i ) {
-				file_snapshot_future.write( (const char*)(&(*m_cache_snapshot_future.m_vec_cache_out)[i]), sizeof( SnapshotFuture ) );
+				file_snapshot_stock.write( (const char*)(&(*m_cache_snapshot_stock.m_vec_cache_out)[i]), sizeof( SnapshotStock_HGT ) );
 			}
-			file_snapshot_future.close(); // 已含 flush() 动作
-			m_cache_snapshot_future.m_dump_num += out_data_number;
+			file_snapshot_stock.close(); // 已含 flush() 动作
+			m_cache_snapshot_stock.m_dump_num += out_data_number;
 		}
 		else {
-			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotFuture：打开转储文件失败！{0}", m_cache_snapshot_future.m_file_path );
+			FormatLibrary::StandardLibrary::FormatTo( log_info, "SnapshotStock：打开转储文件失败！{0}", m_cache_snapshot_stock.m_file_path );
 			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
 	}
@@ -691,8 +694,8 @@ void QuoterHGT_P::StartNetServer() {
 	m_data_encode = m_configs.m_data_encode;
 	m_data_compress = m_configs.m_data_compress;
 
-	m_output_buf_len_snapshot_future = sizeof( SnapshotFuture ) + sizeof( SnapshotFuture ) / 3 + 128; // > ( nInputLen + 12 ) * 1.001;
-	m_output_buf_snapshot_future = new unsigned char[m_output_buf_len_snapshot_future]; // 需足够大
+	m_output_buf_len_snapshot_stock = sizeof( SnapshotStock_HGT ) + sizeof( SnapshotStock_HGT ) / 3 + 128; // > ( nInputLen + 12 ) * 1.001;
+	m_output_buf_snapshot_stock = new unsigned char[m_output_buf_len_snapshot_stock]; // 需足够大
 
 	basicx::CfgBasic* cfg_basic = m_syscfg->GetCfgBasic();
 
@@ -867,19 +870,19 @@ std::string QuoterHGT_P::OnUserAddSub( Request* request ) {
 		return OnErrorResult( TD_FUNC_QUOTE_ADDSUB, -1, log_info, request->m_code );
 	}
 
-	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == quote_type ) {
+	if( TD_FUNC_QUOTE_DATA_SNAPSHOT_STOCK_HGT == quote_type ) {
 		if( "" == quote_list ) { // 订阅全市场
-			AddConSubAll( m_csm_snapshot_future, request->m_identity, connect_info );
-			ClearConSubOne( m_csm_snapshot_future, request->m_identity ); // 退订所有单个证券
+			AddConSubAll( m_csm_snapshot_stock, request->m_identity, connect_info );
+			ClearConSubOne( m_csm_snapshot_stock, request->m_identity ); // 退订所有单个证券
 		}
 		else { // 指定证券
-			if( IsConSubAll( m_csm_snapshot_future, request->m_identity ) == false ) { // 未全市场订阅
+			if( IsConSubAll( m_csm_snapshot_stock, request->m_identity ) == false ) { // 未全市场订阅
 				std::vector<std::string> vec_filter_temp;
 				boost::split( vec_filter_temp, quote_list, boost::is_any_of( ", " ), boost::token_compress_on );
 				size_t size_temp = vec_filter_temp.size();
 				for( size_t i = 0; i < size_temp; i++ ) {
 					if( vec_filter_temp[i] != "" ) {
-						AddConSubOne( m_csm_snapshot_future, vec_filter_temp[i], request->m_identity, connect_info );
+						AddConSubOne( m_csm_snapshot_stock, vec_filter_temp[i], request->m_identity, connect_info );
 					}
 				}
 			}
@@ -920,19 +923,19 @@ std::string QuoterHGT_P::OnUserDelSub( Request* request ) {
 		return OnErrorResult( TD_FUNC_QUOTE_DELSUB, -1, log_info, request->m_code );
 	}
 
-	if( TD_FUNC_QUOTE_DATA_MARKET_FUTURE_NP == quote_type ) {
+	if( TD_FUNC_QUOTE_DATA_SNAPSHOT_STOCK_HGT == quote_type ) {
 		if( "" == quote_list ) { // 退订全市场
-			DelConSubAll( m_csm_snapshot_future, request->m_identity );
-			ClearConSubOne( m_csm_snapshot_future, request->m_identity ); // 退订所有单个证券
+			DelConSubAll( m_csm_snapshot_stock, request->m_identity );
+			ClearConSubOne( m_csm_snapshot_stock, request->m_identity ); // 退订所有单个证券
 		}
 		else { // 指定证券
-			if( IsConSubAll( m_csm_snapshot_future, request->m_identity ) == false ) { // 未全市场订阅，已订阅全市场的话不可能还有单证券订阅
+			if( IsConSubAll( m_csm_snapshot_stock, request->m_identity ) == false ) { // 未全市场订阅，已订阅全市场的话不可能还有单证券订阅
 				std::vector<std::string> vec_filter_temp;
 				boost::split( vec_filter_temp, quote_list, boost::is_any_of( ", " ), boost::token_compress_on );
 				size_t size_temp = vec_filter_temp.size();
 				for( size_t i = 0; i < size_temp; i++ ) {
 					if( vec_filter_temp[i] != "" ) {
-						DelConSubOne( m_csm_snapshot_future, vec_filter_temp[i], request->m_identity );
+						DelConSubOne( m_csm_snapshot_stock, vec_filter_temp[i], request->m_identity );
 					}
 				}
 			}
@@ -1151,68 +1154,68 @@ std::string QuoterHGT_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 //	char now_date_temp[9];
 //	strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
 //
-//	SnapshotFuture snapshot_future_temp;
-//	memset( &snapshot_future_temp, 0, sizeof( SnapshotFuture ) );
+//	SnapshotStock_HGT snapshot_stock_temp;
+//	memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
 //
-//	strcpy_s( snapshot_future_temp.m_code, pDepthMarketData->InstrumentID ); // 合约代码
-//	strcpy_s( snapshot_future_temp.m_name, "" ); // 合约名称 // 无
-//	strcpy_s( snapshot_future_temp.m_type, "F" ); // 合约类型
-//	strcpy_s( snapshot_future_temp.m_market, pDepthMarketData->ExchangeID ); // 合约市场
-//	strcpy_s( snapshot_future_temp.m_status, "N" ); // 合约状态：正常
-//	snapshot_future_temp.m_last = (uint32_t)(pDepthMarketData->LastPrice * 10000); // 最新价 // 10000
-//	snapshot_future_temp.m_open = (uint32_t)(pDepthMarketData->OpenPrice * 10000); // 开盘价 // 10000
-//	snapshot_future_temp.m_high = (uint32_t)(pDepthMarketData->HighestPrice * 10000); // 最高价 // 10000
-//	snapshot_future_temp.m_low = (uint32_t)(pDepthMarketData->LowestPrice * 10000); // 最低价 // 10000
-//	snapshot_future_temp.m_close = (uint32_t)(pDepthMarketData->ClosePrice * 10000); // 收盘价 // 10000
-//	snapshot_future_temp.m_pre_close = (uint32_t)(pDepthMarketData->PreClosePrice * 10000); // 昨收价 // 10000
-//	snapshot_future_temp.m_volume = pDepthMarketData->Volume; // 成交量
-//	snapshot_future_temp.m_turnover = (int64_t)(pDepthMarketData->Turnover * 10000); // 成交额 // 10000
-//	snapshot_future_temp.m_ask_price[0] = (uint32_t)(pDepthMarketData->AskPrice1 * 10000); // 卖价 1 // 10000
-//	snapshot_future_temp.m_ask_volume[0] = pDepthMarketData->AskVolume1; // 卖量 1
-//	snapshot_future_temp.m_ask_price[1] = (uint32_t)(pDepthMarketData->AskPrice2 * 10000); // 卖价 2 // 10000
-//	snapshot_future_temp.m_ask_volume[1] = pDepthMarketData->AskVolume2; // 卖量 2
-//	snapshot_future_temp.m_ask_price[2] = (uint32_t)(pDepthMarketData->AskPrice3 * 10000); // 卖价 3 // 10000
-//	snapshot_future_temp.m_ask_volume[2] = pDepthMarketData->AskVolume3; // 卖量 3
-//	snapshot_future_temp.m_ask_price[3] = (uint32_t)(pDepthMarketData->AskPrice4 * 10000); // 卖价 4 // 10000
-//	snapshot_future_temp.m_ask_volume[3] = pDepthMarketData->AskVolume4; // 卖量 4
-//	snapshot_future_temp.m_ask_price[4] = (uint32_t)(pDepthMarketData->AskPrice5 * 10000); // 卖价 5 // 10000
-//	snapshot_future_temp.m_ask_volume[4] = pDepthMarketData->AskVolume5; // 卖量 5
-//	snapshot_future_temp.m_bid_price[0] = (uint32_t)(pDepthMarketData->BidPrice1 * 10000); // 买价 1 // 10000
-//	snapshot_future_temp.m_bid_volume[0] = pDepthMarketData->BidVolume1; // 买量 1
-//	snapshot_future_temp.m_bid_price[1] = (uint32_t)(pDepthMarketData->BidPrice2 * 10000); // 买价 2 // 10000
-//	snapshot_future_temp.m_bid_volume[1] = pDepthMarketData->BidVolume2; // 买量 2
-//	snapshot_future_temp.m_bid_price[2] = (uint32_t)(pDepthMarketData->BidPrice3 * 10000); // 买价 3 // 10000
-//	snapshot_future_temp.m_bid_volume[2] = pDepthMarketData->BidVolume3; // 买量 3
-//	snapshot_future_temp.m_bid_price[3] = (uint32_t)(pDepthMarketData->BidPrice4 * 10000); // 买价 4 // 10000
-//	snapshot_future_temp.m_bid_volume[3] = pDepthMarketData->BidVolume4; // 买量 4
-//	snapshot_future_temp.m_bid_price[4] = (uint32_t)(pDepthMarketData->BidPrice5 * 10000); // 买价 5 // 10000
-//	snapshot_future_temp.m_bid_volume[4] = pDepthMarketData->BidVolume5; // 买量 5
-//	snapshot_future_temp.m_high_limit = (uint32_t)(pDepthMarketData->UpperLimitPrice * 10000); // 涨停价 // 10000
-//	snapshot_future_temp.m_low_limit = (uint32_t)(pDepthMarketData->LowerLimitPrice * 10000); // 跌停价 // 10000
-//	snapshot_future_temp.m_settle = (uint32_t)(pDepthMarketData->SettlementPrice * 10000); // 今日结算价 // 10000
-//	snapshot_future_temp.m_pre_settle = (uint32_t)(pDepthMarketData->PreSettlementPrice * 10000); // 昨日结算价 // 10000
-//	snapshot_future_temp.m_position = (int32_t)pDepthMarketData->OpenInterest; // 今日持仓量
-//	snapshot_future_temp.m_pre_position = (int32_t)pDepthMarketData->PreOpenInterest; // 昨日持仓量
-//	snapshot_future_temp.m_average = (uint32_t)(pDepthMarketData->AveragePrice * 10000); // 均价 // 10000
-//	snapshot_future_temp.m_up_down = 0; // 涨跌 // 10000 // 无
-//	snapshot_future_temp.m_up_down_rate = 0; // 涨跌幅度 // 10000 // 无
-//	snapshot_future_temp.m_swing = 0; // 振幅 // 10000 // 无
-//	snapshot_future_temp.m_delta = (int32_t)(pDepthMarketData->CurrDelta * 10000); // 今日虚实度 // 10000
-//	snapshot_future_temp.m_pre_delta = (int32_t)(pDepthMarketData->PreDelta * 10000); // 昨日虚实度 // 10000
-//	snapshot_future_temp.m_quote_date = atoi( pDepthMarketData->TradingDay ); // 行情日期 // YYYYMMDD
+//	strcpy_s( snapshot_stock_temp.m_code, pDepthMarketData->InstrumentID ); // 合约代码
+//	strcpy_s( snapshot_stock_temp.m_name, "" ); // 合约名称 // 无
+//	strcpy_s( snapshot_stock_temp.m_type, "F" ); // 合约类型
+//	strcpy_s( snapshot_stock_temp.m_market, pDepthMarketData->ExchangeID ); // 合约市场
+//	strcpy_s( snapshot_stock_temp.m_status, "N" ); // 合约状态：正常
+//	snapshot_stock_temp.m_last = (uint32_t)(pDepthMarketData->LastPrice * 10000); // 最新价 // 10000
+//	snapshot_stock_temp.m_open = (uint32_t)(pDepthMarketData->OpenPrice * 10000); // 开盘价 // 10000
+//	snapshot_stock_temp.m_high = (uint32_t)(pDepthMarketData->HighestPrice * 10000); // 最高价 // 10000
+//	snapshot_stock_temp.m_low = (uint32_t)(pDepthMarketData->LowestPrice * 10000); // 最低价 // 10000
+//	snapshot_stock_temp.m_close = (uint32_t)(pDepthMarketData->ClosePrice * 10000); // 收盘价 // 10000
+//	snapshot_stock_temp.m_pre_close = (uint32_t)(pDepthMarketData->PreClosePrice * 10000); // 昨收价 // 10000
+//	snapshot_stock_temp.m_volume = pDepthMarketData->Volume; // 成交量
+//	snapshot_stock_temp.m_turnover = (int64_t)(pDepthMarketData->Turnover * 10000); // 成交额 // 10000
+//	snapshot_stock_temp.m_ask_price[0] = (uint32_t)(pDepthMarketData->AskPrice1 * 10000); // 卖价 1 // 10000
+//	snapshot_stock_temp.m_ask_volume[0] = pDepthMarketData->AskVolume1; // 卖量 1
+//	snapshot_stock_temp.m_ask_price[1] = (uint32_t)(pDepthMarketData->AskPrice2 * 10000); // 卖价 2 // 10000
+//	snapshot_stock_temp.m_ask_volume[1] = pDepthMarketData->AskVolume2; // 卖量 2
+//	snapshot_stock_temp.m_ask_price[2] = (uint32_t)(pDepthMarketData->AskPrice3 * 10000); // 卖价 3 // 10000
+//	snapshot_stock_temp.m_ask_volume[2] = pDepthMarketData->AskVolume3; // 卖量 3
+//	snapshot_stock_temp.m_ask_price[3] = (uint32_t)(pDepthMarketData->AskPrice4 * 10000); // 卖价 4 // 10000
+//	snapshot_stock_temp.m_ask_volume[3] = pDepthMarketData->AskVolume4; // 卖量 4
+//	snapshot_stock_temp.m_ask_price[4] = (uint32_t)(pDepthMarketData->AskPrice5 * 10000); // 卖价 5 // 10000
+//	snapshot_stock_temp.m_ask_volume[4] = pDepthMarketData->AskVolume5; // 卖量 5
+//	snapshot_stock_temp.m_bid_price[0] = (uint32_t)(pDepthMarketData->BidPrice1 * 10000); // 买价 1 // 10000
+//	snapshot_stock_temp.m_bid_volume[0] = pDepthMarketData->BidVolume1; // 买量 1
+//	snapshot_stock_temp.m_bid_price[1] = (uint32_t)(pDepthMarketData->BidPrice2 * 10000); // 买价 2 // 10000
+//	snapshot_stock_temp.m_bid_volume[1] = pDepthMarketData->BidVolume2; // 买量 2
+//	snapshot_stock_temp.m_bid_price[2] = (uint32_t)(pDepthMarketData->BidPrice3 * 10000); // 买价 3 // 10000
+//	snapshot_stock_temp.m_bid_volume[2] = pDepthMarketData->BidVolume3; // 买量 3
+//	snapshot_stock_temp.m_bid_price[3] = (uint32_t)(pDepthMarketData->BidPrice4 * 10000); // 买价 4 // 10000
+//	snapshot_stock_temp.m_bid_volume[3] = pDepthMarketData->BidVolume4; // 买量 4
+//	snapshot_stock_temp.m_bid_price[4] = (uint32_t)(pDepthMarketData->BidPrice5 * 10000); // 买价 5 // 10000
+//	snapshot_stock_temp.m_bid_volume[4] = pDepthMarketData->BidVolume5; // 买量 5
+//	snapshot_stock_temp.m_high_limit = (uint32_t)(pDepthMarketData->UpperLimitPrice * 10000); // 涨停价 // 10000
+//	snapshot_stock_temp.m_low_limit = (uint32_t)(pDepthMarketData->LowerLimitPrice * 10000); // 跌停价 // 10000
+//	snapshot_stock_temp.m_settle = (uint32_t)(pDepthMarketData->SettlementPrice * 10000); // 今日结算价 // 10000
+//	snapshot_stock_temp.m_pre_settle = (uint32_t)(pDepthMarketData->PreSettlementPrice * 10000); // 昨日结算价 // 10000
+//	snapshot_stock_temp.m_position = (int32_t)pDepthMarketData->OpenInterest; // 今日持仓量
+//	snapshot_stock_temp.m_pre_position = (int32_t)pDepthMarketData->PreOpenInterest; // 昨日持仓量
+//	snapshot_stock_temp.m_average = (uint32_t)(pDepthMarketData->AveragePrice * 10000); // 均价 // 10000
+//	snapshot_stock_temp.m_up_down = 0; // 涨跌 // 10000 // 无
+//	snapshot_stock_temp.m_up_down_rate = 0; // 涨跌幅度 // 10000 // 无
+//	snapshot_stock_temp.m_swing = 0; // 振幅 // 10000 // 无
+//	snapshot_stock_temp.m_delta = (int32_t)(pDepthMarketData->CurrDelta * 10000); // 今日虚实度 // 10000
+//	snapshot_stock_temp.m_pre_delta = (int32_t)(pDepthMarketData->PreDelta * 10000); // 昨日虚实度 // 10000
+//	snapshot_stock_temp.m_quote_date = atoi( pDepthMarketData->TradingDay ); // 行情日期 // YYYYMMDD
 //	char c_quote_time[12] = { 0 };
 //	sprintf( c_quote_time, "%s%03d", pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec ); // HH:MM:SSmmm
 //	std::string s_quote_time( c_quote_time );
 //	basicx::StringReplace( s_quote_time, ":", "" );
-//	snapshot_future_temp.m_quote_time = atoi( s_quote_time.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
-//	snapshot_future_temp.m_local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // 本地日期 // YYYYMMDD
-//	snapshot_future_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
-//	m_quoter_hgt_p->m_cache_snapshot_future.m_local_index++;
-//	snapshot_future_temp.m_local_index = m_quoter_hgt_p->m_cache_snapshot_future.m_local_index; // 本地序号
+//	snapshot_stock_temp.m_quote_time = atoi( s_quote_time.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
+//	snapshot_stock_temp.m_local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // 本地日期 // YYYYMMDD
+//	snapshot_stock_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
+//	m_quoter_hgt_p->m_cache_snapshot_stock.m_local_index++;
+//	snapshot_stock_temp.m_local_index = m_quoter_hgt_p->m_cache_snapshot_stock.m_local_index; // 本地序号
 //
-//	m_quoter_hgt_p->m_cache_snapshot_future.m_recv_num++;
+//	m_quoter_hgt_p->m_cache_snapshot_stock.m_recv_num++;
 //
-//	m_quoter_hgt_p->MS_AddData_SnapshotFuture( snapshot_future_temp );
+//	m_quoter_hgt_p->MS_AddData_SnapshotStock( snapshot_stock_temp );
 //
 //	//std::string log_info;
 //	//FormatLibrary::StandardLibrary::FormatTo( log_info, "行情反馈：合约:{0} 市场:{1} 现价:{2} 最高价:{3} 最低价:{4} 卖一价:{5} 卖一量:{6} 买一价:{7} 买一量:{8}", 

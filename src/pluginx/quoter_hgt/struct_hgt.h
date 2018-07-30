@@ -40,6 +40,7 @@
 
 #include "zlib.h"
 
+#include <common/assist.h>
 #include <network/server.h>
 
 #include "define_hgt.h"
@@ -47,13 +48,13 @@
 typedef boost::shared_ptr<boost::thread> thread_ptr;
 typedef boost::shared_ptr<boost::asio::io_service> service_ptr;
 
-#define SNAPSHOT_FUTURE_V1
+#define SNAPSHOT_STOCK_HGT_V1
 
-#ifdef SNAPSHOT_FUTURE_V1
-    #define SNAPSHOT_FUTURE_VERSION '1'
+#ifdef SNAPSHOT_STOCK_HGT_V1
+    #define SNAPSHOT_STOCK_HGT_VERSION '1'
 #endif
-#ifdef SNAPSHOT_FUTURE_V2
-    #define SNAPSHOT_FUTURE_VERSION '2'
+#ifdef SNAPSHOT_STOCK_HGT_V2
+    #define SNAPSHOT_STOCK_HGT_VERSION '2'
 #endif
 
 #pragma pack( push )
@@ -94,6 +95,7 @@ struct ConSubMan
 
 struct Config // 保证均被赋值
 {
+	std::string m_market_data_folder;
 	std::string m_address;
 	std::string m_broker_id;
 	std::string m_username;
@@ -137,53 +139,646 @@ public:
 	std::vector<T>* m_vec_cache_out;
 };
 
-#ifdef SNAPSHOT_FUTURE_V1
-struct SnapshotFuture // 所有变量均会被赋值
+#ifdef SNAPSHOT_STOCK_HGT_V1
+struct SnapshotStock_HGT // 所有变量均会被赋值
 {
-	char m_code[8]; // 合约代码
-	char m_name[2]; // 合约名称 // 无
-	char m_type[2]; // 合约类型
-	char m_market[6]; // 合约市场
-	char m_status[2]; // 合约状态
-	uint32_t m_last; // 最新价 // 10000
-	uint32_t m_open; // 开盘价 // 10000
-	uint32_t m_high; // 最高价 // 10000
-	uint32_t m_low; // 最低价 // 10000
-	uint32_t m_close; // 收盘价 // 10000
-	uint32_t m_pre_close; // 昨收价 // 10000
-	int64_t m_volume; // 成交量
-	int64_t m_turnover; // 成交额 // 10000
-	uint32_t m_ask_price[5]; // 申卖价 // 10000
-	int32_t m_ask_volume[5]; // 申卖量
-	uint32_t m_bid_price[5]; // 申买价 // 10000
-	int32_t m_bid_volume[5]; // 申买量
-	uint32_t m_high_limit; // 涨停价 // 10000
-	uint32_t m_low_limit; // 跌停价 // 10000
-	uint32_t m_settle; // 今日结算价 // 10000
-	uint32_t m_pre_settle; // 昨日结算价 // 10000
-	int32_t m_position; // 今日持仓量
-	int32_t m_pre_position; // 昨日持仓量
-	uint32_t m_average; // 均价 // 10000
-	int32_t m_up_down; // 涨跌 // 10000 // 无
-	int32_t m_up_down_rate; // 涨跌幅度 // 10000 // 无
-	int32_t m_swing; // 振幅 // 10000 // 无
-	int32_t m_delta; // 今日虚实度 // 10000
-	int32_t m_pre_delta; // 昨日虚实度 // 10000
-	int32_t m_quote_date; // 行情日期 // YYYYMMDD
-	int32_t m_quote_time; // 行情时间 // HHMMSSmmm 精度：毫秒
-	int32_t m_local_date; // 本地日期 // YYYYMMDD
-	int32_t m_local_time; // 本地时间 // HHMMSSmmm 精度：毫秒
-	uint32_t m_local_index; // 本地序号
-	// 交易所合约代码 ExchangeInstID
-	// 业务日期 ActionDay
+	char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
+	char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
+	char m_Symbol[33];          // 中文证券简称           C32    // MD401、MD404、MD405
+	char m_SymbolEn[16];        // 英文证券简称           C15    // MD401、MD404、MD405
+
+	int64_t m_TradeVolume;      // 成交数量               N16    // MD401
+	int64_t m_TotalValueTraded; // 成交金额               N16(3) // MD401 // 10000
+	uint32_t m_PreClosePx;      // 昨日收盘价             N11(3) // MD401 // 10000
+	uint32_t m_NominalPrice;    // 按盘价                 N11(3) // MD401 // 10000
+	uint32_t m_HighPrice;       // 最高价                 N11(3) // MD401 // 10000
+	uint32_t m_LowPrice;        // 最低价                 N11(3) // MD401 // 10000
+	uint32_t m_TradePrice;      // 最新价                 N11(3) // MD401 // 10000
+	uint32_t m_BuyPrice1;       // 申买价一               N11(3) // MD401 // 10000
+	int32_t m_BuyVolume1;       // 申买量一               N12    // MD401
+	uint32_t m_SellPrice1;      // 申卖价一               N11(3) // MD401 // 10000
+	int32_t m_SellVolume1;      // 申卖量一               N12    // MD401
+	int32_t m_SecTradingStatus; // 证券交易状态           C8     // MD401
+
+	int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSSmmm 精度：毫秒
+	int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSSmmm 精度：毫秒
+	uint32_t m_VCMRefPrice;     // 市调机制参考价         N11(3) // MD404 // 10000
+	uint32_t m_VCMLowerPrice;   // 市调机制下限价         N11(3) // MD404 // 10000
+	uint32_t m_VCMUpperPrice;   // 市调机制上限价         N11(3) // MD404 // 10000
+
+	uint32_t m_CASRefPrice;     // 收盘集合竞价时段参考价 N11(3) // MD405 // 10000
+	uint32_t m_CASLowerPrice;   // 收盘集合竞价时段下限价 N11(3) // MD405 // 10000
+	uint32_t m_CASUpperPrice;   // 收盘集合竞价时段上限价 N11(3) // MD405 // 10000
+	char m_OrdImbDirection[2];  // 不能配对买卖盘方向     C1     // MD405
+	int32_t m_OrdImbQty;        // 不能配对买卖盘量       N12    // MD405
+
+	int32_t m_Timestamp;        // 行情时间               C12    // MD401、MD404、MD405 // HHMMSSmmm 精度：毫秒
 };
 #endif
 
-#ifdef SNAPSHOT_FUTURE_V2
-struct SnapshotFuture // 所有变量均会被赋值
+#ifdef SNAPSHOT_STOCK_HGT_V2
+struct SnapshotStock_HGT // 所有变量均会被赋值
 {
 };
 #endif
+
+struct Define_Item
+{
+	size_t m_len;
+	int32_t m_pos;
+	char* m_txt;
+
+	Define_Item()
+		: m_len( 0 )
+		, m_pos( 0 )
+		, m_txt( nullptr ) {
+	}
+
+	~Define_Item() {
+		if( m_txt != nullptr ) {
+			delete[] m_txt;
+		}
+	}
+
+	void Txt( size_t size ) {
+		try {
+			m_txt = new char[size];
+			memset( m_txt, 0, size );
+		}
+		catch( ... ) {
+		}
+	}
+};
+
+struct Define_Item_W
+{
+	size_t m_len;
+	int32_t m_pos;
+	char16_t* m_txt; //
+
+	Define_Item_W()
+		: m_len( 0 )
+		, m_pos( 0 )
+		, m_txt( nullptr ) {
+	}
+
+	~Define_Item_W() {
+		if( m_txt != nullptr ) {
+			delete[] m_txt;
+		}
+	}
+
+	void Txt( size_t size ) {
+		try {
+			m_txt = new char16_t[size];
+			memset( m_txt, 0, size * 2 ); // UTF-16 LE
+		}
+		catch( ... ) {
+		}
+	}
+};
+
+struct Define_Head
+{
+	Define_Item m_item_01;
+	Define_Item m_item_02;
+	Define_Item m_item_03;
+	Define_Item m_item_04;
+	Define_Item m_item_05;
+	Define_Item m_item_06;
+	Define_Item m_item_07;
+	Define_Item m_item_08;
+	Define_Item m_item_09;
+	int32_t m_pos_end;
+
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	std::string m_BeginString;
+	std::string m_Version;
+	int32_t m_BodyLength;
+	int32_t m_TotNumTradeReports;
+	int32_t m_MDReportID;
+	std::string m_SenderCompID;
+	std::string m_MDTime;
+	int32_t m_MDUpdateType;
+	int32_t m_MktStatus;
+
+	int32_t m_md_year;
+	int32_t m_md_month;
+	int32_t m_md_day;
+	int32_t m_md_hour;
+	int32_t m_md_minute;
+	int32_t m_md_second;
+
+	Define_Head() {
+		m_item_01.m_len = 6;
+		m_item_02.m_len = 8;
+		m_item_03.m_len = 10;
+		m_item_04.m_len = 5;
+		m_item_05.m_len = 8;
+		m_item_06.m_len = 6;
+		m_item_07.m_len = 21;
+		m_item_08.m_len = 1;
+		m_item_09.m_len = 8;
+		// 位置计算 + 1 是分隔符 '|' 占位
+		m_item_01.m_pos = 0;                                     // 起始标识符   C6
+		m_item_02.m_pos = m_item_01.m_pos + m_item_01.m_len + 1; // 版本         C8
+		m_item_03.m_pos = m_item_02.m_pos + m_item_02.m_len + 1; // 数据长度     N10
+		m_item_04.m_pos = m_item_03.m_pos + m_item_03.m_len + 1; // 文件体记录数 N5
+		m_item_05.m_pos = m_item_04.m_pos + m_item_04.m_len + 1; // 行情序号     N8
+		m_item_06.m_pos = m_item_05.m_pos + m_item_05.m_len + 1; // 发送方       C6
+		m_item_07.m_pos = m_item_06.m_pos + m_item_06.m_len + 1; // 行情文件时间 C21
+		m_item_08.m_pos = m_item_07.m_pos + m_item_07.m_len + 1; // 发送方式     N1
+		m_item_09.m_pos = m_item_08.m_pos + m_item_08.m_len + 1; // 市场状态     C8
+		m_pos_end = m_item_09.m_pos + m_item_09.m_len + 1;       // 换行符
+		m_item_01.Txt( m_item_01.m_len + 1 );
+		m_item_02.Txt( m_item_02.m_len + 1 );
+		m_item_03.Txt( m_item_03.m_len + 1 );
+		m_item_04.Txt( m_item_04.m_len + 1 );
+		m_item_05.Txt( m_item_05.m_len + 1 );
+		m_item_06.Txt( m_item_06.m_len + 1 );
+		m_item_07.Txt( m_item_07.m_len + 1 );
+		m_item_08.Txt( m_item_08.m_len + 1 );
+		m_item_09.Txt( m_item_09.m_len + 1 );
+		m_line_size = m_pos_end;
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size];
+			memset( m_line_buffer, 0, m_line_size );
+		}
+		catch( ... ) {
+		}
+		m_BeginString = "";
+		m_Version = "";
+		m_BodyLength = 0;
+		m_TotNumTradeReports = 0;
+		m_MDReportID = 0;
+		m_SenderCompID = "";
+		m_MDTime = "";
+		m_MDUpdateType = 0;
+		m_MktStatus = 0;
+		m_md_year = 0;
+		m_md_month = 0;
+		m_md_day = 0;
+		m_md_hour = 0;
+		m_md_minute = 0;
+		m_md_second = 0;
+	}
+
+	~Define_Head() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			try { // 防 m_txt 空
+				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
+				memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
+				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
+				memcpy( m_item_03.m_txt, &m_line_buffer[m_item_03.m_pos], m_item_03.m_len );
+				memcpy( m_item_04.m_txt, &m_line_buffer[m_item_04.m_pos], m_item_04.m_len );
+				memcpy( m_item_05.m_txt, &m_line_buffer[m_item_05.m_pos], m_item_05.m_len );
+				memcpy( m_item_06.m_txt, &m_line_buffer[m_item_06.m_pos], m_item_06.m_len );
+				memcpy( m_item_07.m_txt, &m_line_buffer[m_item_07.m_pos], m_item_07.m_len );
+				memcpy( m_item_08.m_txt, &m_line_buffer[m_item_08.m_pos], m_item_08.m_len );
+				memcpy( m_item_09.m_txt, &m_line_buffer[m_item_09.m_pos], m_item_09.m_len );
+				m_BeginString = m_item_01.m_txt;
+				m_Version = StringTrim( m_item_02.m_txt, " " );
+				m_BodyLength = atoi( m_item_03.m_txt );
+				m_TotNumTradeReports = atoi( m_item_04.m_txt );
+				m_MDReportID = atoi( m_item_05.m_txt );
+				m_SenderCompID = StringTrim( m_item_06.m_txt, " " );
+				m_MDTime = m_item_07.m_txt;
+				m_MDUpdateType = atoi( m_item_08.m_txt );
+				m_MktStatus = atoi( m_item_09.m_txt ); // std::string -> int32_t
+				if( m_MDTime != "" ) { // YYYYMMDD-HH:MM:SS.000
+					m_md_year = atoi( m_MDTime.substr( 0, 4 ).c_str() );
+					m_md_month = atoi( m_MDTime.substr( 4, 2 ).c_str() );
+					m_md_day = atoi( m_MDTime.substr( 6, 2 ).c_str() );
+					m_md_hour = atoi( m_MDTime.substr( 9, 2 ).c_str() );
+					m_md_minute = atoi( m_MDTime.substr( 12, 2 ).c_str() );
+					m_md_second = atoi( m_MDTime.substr( 15, 2 ).c_str() );
+				}
+			}
+			catch( ... ) {
+			}
+		}
+	}
+
+	void Print() {
+		std::cout << m_BeginString << "|";
+		std::cout << m_Version << "|";
+		std::cout << m_BodyLength << "|";
+		std::cout << m_TotNumTradeReports << "|";
+		std::cout << m_MDReportID << "|";
+		std::cout << m_SenderCompID << "|";
+		std::cout << m_MDTime << "|";
+		std::cout << m_MDUpdateType << "|";
+		std::cout << m_MktStatus << "|";
+		std::cout << "<" << m_md_year << "-" << m_md_month << "-" << m_md_day << " " << m_md_hour << ":" << m_md_minute << ":" << m_md_second << ">" << std::endl;
+	}
+};
+
+struct Define_Type
+{
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	std::string m_MDStreamID;
+
+	Define_Type() {
+		m_line_size = 5; // 行情数据类型 C5
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size + 1];
+			memset( m_line_buffer, 0, m_line_size + 1 );
+		}
+		catch( ... ) {
+		}
+		m_MDStreamID = "";
+	}
+
+	~Define_Type() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			// 这里 fread 的是定长 m_line_buffer 最后一位已被 memset 为 0 且不变
+			fread( m_line_buffer, m_line_size, 1, market_data_file );
+			m_MDStreamID = m_line_buffer;
+		}
+	}
+
+	void Print() {
+		std::cout << m_MDStreamID << "|";
+	}
+};
+
+struct Define_MD401
+{
+	Define_Item m_item_01;
+	Define_Item m_item_02;
+	Define_Item_W m_item_03; //
+	Define_Item m_item_04;
+	Define_Item m_item_05;
+	Define_Item m_item_06;
+	Define_Item m_item_07;
+	Define_Item m_item_08;
+	Define_Item m_item_09;
+	Define_Item m_item_10;
+	Define_Item m_item_11;
+	Define_Item m_item_12;
+	Define_Item m_item_13;
+	Define_Item m_item_14;
+	Define_Item m_item_15;
+	Define_Item m_item_16;
+	Define_Item m_item_17;
+	int32_t m_pos_end;
+
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	Define_MD401() {
+		m_item_01.m_len = 5;
+		m_item_02.m_len = 5;
+		m_item_03.m_len = 32;
+		m_item_04.m_len = 15;
+		m_item_05.m_len = 16;
+		m_item_06.m_len = 16;
+		m_item_07.m_len = 11;
+		m_item_08.m_len = 11;
+		m_item_09.m_len = 11;
+		m_item_10.m_len = 11;
+		m_item_11.m_len = 11;
+		m_item_12.m_len = 11;
+		m_item_13.m_len = 12;
+		m_item_14.m_len = 11;
+		m_item_15.m_len = 12;
+		m_item_16.m_len = 8;
+		m_item_17.m_len = 12;
+		// 位置计算 + 1 是分隔符 '|' 占位
+		m_item_01.m_pos = 0;                                     // 行情数据类型 C5
+		m_item_02.m_pos = 1;                                     // 证券代码     C5 // 从 行情数据类型 字段后的 "|" 开始
+		m_item_03.m_pos = m_item_02.m_pos + m_item_02.m_len + 1; // 中文证券简称 C32
+		m_item_04.m_pos = m_item_03.m_pos + m_item_03.m_len + 1; // 英文证券简称 C15
+		m_item_05.m_pos = m_item_04.m_pos + m_item_04.m_len + 1; // 成交数量     N16
+		m_item_06.m_pos = m_item_05.m_pos + m_item_05.m_len + 1; // 成交金额     N16(3)
+		m_item_07.m_pos = m_item_06.m_pos + m_item_06.m_len + 1; // 昨日收盘价   N11(3)
+		m_item_08.m_pos = m_item_07.m_pos + m_item_07.m_len + 1; // 按盘价       N11(3)
+		m_item_09.m_pos = m_item_08.m_pos + m_item_08.m_len + 1; // 最高价       N11(3)
+		m_item_10.m_pos = m_item_09.m_pos + m_item_09.m_len + 1; // 最低价       N11(3)
+		m_item_11.m_pos = m_item_10.m_pos + m_item_10.m_len + 1; // 最新价       N11(3)
+		m_item_12.m_pos = m_item_11.m_pos + m_item_11.m_len + 1; // 申买价一     N11(3)
+		m_item_13.m_pos = m_item_12.m_pos + m_item_12.m_len + 1; // 申买量一     N12
+		m_item_14.m_pos = m_item_13.m_pos + m_item_13.m_len + 1; // 申卖价一     N11(3)
+		m_item_15.m_pos = m_item_14.m_pos + m_item_14.m_len + 1; // 申卖量一     N12
+		m_item_16.m_pos = m_item_15.m_pos + m_item_15.m_len + 1; // 证券交易状态 C8
+		m_item_17.m_pos = m_item_16.m_pos + m_item_16.m_len + 1; // 行情时间     C12
+		m_pos_end = m_item_17.m_pos + m_item_17.m_len + 1;       // 换行符
+		m_item_01.Txt( m_item_01.m_len + 1 );
+		m_item_02.Txt( m_item_02.m_len + 1 );
+		m_item_03.Txt( m_item_03.m_len / 2 + 1 ); // UTF-16 LE
+		m_item_04.Txt( m_item_04.m_len + 1 );
+		m_item_05.Txt( m_item_05.m_len + 1 );
+		m_item_06.Txt( m_item_06.m_len + 1 );
+		m_item_07.Txt( m_item_07.m_len + 1 );
+		m_item_08.Txt( m_item_08.m_len + 1 );
+		m_item_09.Txt( m_item_09.m_len + 1 );
+		m_item_10.Txt( m_item_10.m_len + 1 );
+		m_item_11.Txt( m_item_11.m_len + 1 );
+		m_item_12.Txt( m_item_12.m_len + 1 );
+		m_item_13.Txt( m_item_13.m_len + 1 );
+		m_item_14.Txt( m_item_14.m_len + 1 );
+		m_item_15.Txt( m_item_15.m_len + 1 );
+		m_item_16.Txt( m_item_16.m_len + 1 );
+		m_item_17.Txt( m_item_17.m_len + 1 );
+		m_line_size = m_pos_end;
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size];
+			memset( m_line_buffer, 0, m_line_size );
+		}
+		catch( ... ) {
+		}
+	}
+
+	~Define_MD401() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			try { // 防 m_txt 空
+				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
+				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
+				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
+				memcpy( m_item_03.m_txt, &m_line_buffer[m_item_03.m_pos], m_item_03.m_len );
+				memcpy( m_item_04.m_txt, &m_line_buffer[m_item_04.m_pos], m_item_04.m_len );
+				memcpy( m_item_05.m_txt, &m_line_buffer[m_item_05.m_pos], m_item_05.m_len );
+				memcpy( m_item_06.m_txt, &m_line_buffer[m_item_06.m_pos], m_item_06.m_len );
+				memcpy( m_item_07.m_txt, &m_line_buffer[m_item_07.m_pos], m_item_07.m_len );
+				memcpy( m_item_08.m_txt, &m_line_buffer[m_item_08.m_pos], m_item_08.m_len );
+				memcpy( m_item_09.m_txt, &m_line_buffer[m_item_09.m_pos], m_item_09.m_len );
+				memcpy( m_item_10.m_txt, &m_line_buffer[m_item_10.m_pos], m_item_10.m_len );
+				memcpy( m_item_11.m_txt, &m_line_buffer[m_item_11.m_pos], m_item_11.m_len );
+				memcpy( m_item_12.m_txt, &m_line_buffer[m_item_12.m_pos], m_item_12.m_len );
+				memcpy( m_item_13.m_txt, &m_line_buffer[m_item_13.m_pos], m_item_13.m_len );
+				memcpy( m_item_14.m_txt, &m_line_buffer[m_item_14.m_pos], m_item_14.m_len );
+				memcpy( m_item_15.m_txt, &m_line_buffer[m_item_15.m_pos], m_item_15.m_len );
+				memcpy( m_item_16.m_txt, &m_line_buffer[m_item_16.m_pos], m_item_16.m_len );
+				memcpy( m_item_17.m_txt, &m_line_buffer[m_item_17.m_pos], m_item_17.m_len );
+			}
+			catch( ... ) {
+			}
+		}
+	}
+};
+
+struct Define_MD404
+{
+	Define_Item m_item_01;
+	Define_Item m_item_02;
+	Define_Item_W m_item_03; //
+	Define_Item m_item_04;
+	Define_Item m_item_05;
+	Define_Item m_item_06;
+	Define_Item m_item_07;
+	Define_Item m_item_08;
+	Define_Item m_item_09;
+	Define_Item m_item_10;
+	int32_t m_pos_end;
+
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	Define_MD404() {
+		m_item_01.m_len = 5;
+		m_item_02.m_len = 5;
+		m_item_03.m_len = 32;
+		m_item_04.m_len = 16;
+		m_item_05.m_len = 8;
+		m_item_06.m_len = 8;
+		m_item_07.m_len = 11;
+		m_item_08.m_len = 11;
+		m_item_09.m_len = 11;
+		m_item_10.m_len = 12;
+		// 位置计算 + 1 是分隔符 '|' 占位
+		m_item_01.m_pos = 0;                                     // 行情数据类型     C5
+		m_item_02.m_pos = 1;                                     // 证券代码         C5 // 从 行情数据类型 字段后的 "|" 开始
+		m_item_03.m_pos = m_item_02.m_pos + m_item_02.m_len + 1; // 中文证券简称     C32
+		m_item_04.m_pos = m_item_03.m_pos + m_item_03.m_len + 1; // 英文证券简称     C16
+		m_item_05.m_pos = m_item_04.m_pos + m_item_04.m_len + 1; // 市调机制开始时间 C8
+		m_item_06.m_pos = m_item_05.m_pos + m_item_05.m_len + 1; // 市调机制结束时间 C8
+		m_item_07.m_pos = m_item_06.m_pos + m_item_06.m_len + 1; // 市调机制参考价   N11(3)
+		m_item_08.m_pos = m_item_07.m_pos + m_item_07.m_len + 1; // 市调机制下限价   N11(3)
+		m_item_09.m_pos = m_item_08.m_pos + m_item_08.m_len + 1; // 市调机制上限价   N11(3)
+		m_item_10.m_pos = m_item_09.m_pos + m_item_09.m_len + 1; // 行情时间         C12
+		m_pos_end = m_item_10.m_pos + m_item_10.m_len + 1;       // 换行符
+		m_item_01.Txt( m_item_01.m_len + 1 );
+		m_item_02.Txt( m_item_02.m_len + 1 );
+		m_item_03.Txt( m_item_03.m_len / 2 + 1 ); // UTF-16 LE
+		m_item_04.Txt( m_item_04.m_len + 1 );
+		m_item_05.Txt( m_item_05.m_len + 1 );
+		m_item_06.Txt( m_item_06.m_len + 1 );
+		m_item_07.Txt( m_item_07.m_len + 1 );
+		m_item_08.Txt( m_item_08.m_len + 1 );
+		m_item_09.Txt( m_item_09.m_len + 1 );
+		m_item_10.Txt( m_item_10.m_len + 1 );
+		m_line_size = m_pos_end;
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size];
+			memset( m_line_buffer, 0, m_line_size );
+		}
+		catch( ... ) {
+		}
+	}
+
+	~Define_MD404() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			try { // 防 m_txt 空
+				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
+				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
+				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
+				memcpy( m_item_03.m_txt, &m_line_buffer[m_item_03.m_pos], m_item_03.m_len );
+				memcpy( m_item_04.m_txt, &m_line_buffer[m_item_04.m_pos], m_item_04.m_len );
+				memcpy( m_item_05.m_txt, &m_line_buffer[m_item_05.m_pos], m_item_05.m_len );
+				memcpy( m_item_06.m_txt, &m_line_buffer[m_item_06.m_pos], m_item_06.m_len );
+				memcpy( m_item_07.m_txt, &m_line_buffer[m_item_07.m_pos], m_item_07.m_len );
+				memcpy( m_item_08.m_txt, &m_line_buffer[m_item_08.m_pos], m_item_08.m_len );
+				memcpy( m_item_09.m_txt, &m_line_buffer[m_item_09.m_pos], m_item_09.m_len );
+				memcpy( m_item_10.m_txt, &m_line_buffer[m_item_10.m_pos], m_item_10.m_len );
+			}
+			catch( ... ) {
+			}
+		}
+	}
+};
+
+struct Define_MD405
+{
+	Define_Item m_item_01;
+	Define_Item m_item_02;
+	Define_Item_W m_item_03; //
+	Define_Item m_item_04;
+	Define_Item m_item_05;
+	Define_Item m_item_06;
+	Define_Item m_item_07;
+	Define_Item m_item_08;
+	Define_Item m_item_09;
+	Define_Item m_item_10;
+	int32_t m_pos_end;
+
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	Define_MD405() {
+		m_item_01.m_len = 5;
+		m_item_02.m_len = 5;
+		m_item_03.m_len = 32;
+		m_item_04.m_len = 16;
+		m_item_05.m_len = 11;
+		m_item_06.m_len = 11;
+		m_item_07.m_len = 11;
+		m_item_08.m_len = 1;
+		m_item_09.m_len = 12;
+		m_item_10.m_len = 12;
+		// 位置计算 + 1 是分隔符 '|' 占位
+		m_item_01.m_pos = 0;                                     // 行情数据类型           C5
+		m_item_02.m_pos = 1;                                     // 证券代码               C5 // 从 行情数据类型 字段后的 "|" 开始
+		m_item_03.m_pos = m_item_02.m_pos + m_item_02.m_len + 1; // 中文证券简称           C32
+		m_item_04.m_pos = m_item_03.m_pos + m_item_03.m_len + 1; // 英文证券简称           C16
+		m_item_05.m_pos = m_item_04.m_pos + m_item_04.m_len + 1; // 收盘集合竞价时段参考价 N11(3)
+		m_item_06.m_pos = m_item_05.m_pos + m_item_05.m_len + 1; // 收盘集合竞价时段下限价 N11(3)
+		m_item_07.m_pos = m_item_06.m_pos + m_item_06.m_len + 1; // 收盘集合竞价时段上限价 N11(3)
+		m_item_08.m_pos = m_item_07.m_pos + m_item_07.m_len + 1; // 不能配对买卖盘方向     C1
+		m_item_09.m_pos = m_item_08.m_pos + m_item_08.m_len + 1; // 不能配对买卖盘量       N12
+		m_item_10.m_pos = m_item_09.m_pos + m_item_09.m_len + 1; // 行情时间               C12
+		m_pos_end = m_item_10.m_pos + m_item_10.m_len + 1;       // 换行符
+		m_item_01.Txt( m_item_01.m_len + 1 );
+		m_item_02.Txt( m_item_02.m_len + 1 );
+		m_item_03.Txt( m_item_03.m_len / 2 + 1 ); // UTF-16 LE
+		m_item_04.Txt( m_item_04.m_len + 1 );
+		m_item_05.Txt( m_item_05.m_len + 1 );
+		m_item_06.Txt( m_item_06.m_len + 1 );
+		m_item_07.Txt( m_item_07.m_len + 1 );
+		m_item_08.Txt( m_item_08.m_len + 1 );
+		m_item_09.Txt( m_item_09.m_len + 1 );
+		m_item_10.Txt( m_item_10.m_len + 1 );
+		m_line_size = m_pos_end;
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size];
+			memset( m_line_buffer, 0, m_line_size );
+		}
+		catch( ... ) {
+		}
+	}
+
+	~Define_MD405() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			try { // 防 m_txt 空
+				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
+				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
+				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
+				memcpy( m_item_03.m_txt, &m_line_buffer[m_item_03.m_pos], m_item_03.m_len );
+				memcpy( m_item_04.m_txt, &m_line_buffer[m_item_04.m_pos], m_item_04.m_len );
+				memcpy( m_item_05.m_txt, &m_line_buffer[m_item_05.m_pos], m_item_05.m_len );
+				memcpy( m_item_06.m_txt, &m_line_buffer[m_item_06.m_pos], m_item_06.m_len );
+				memcpy( m_item_07.m_txt, &m_line_buffer[m_item_07.m_pos], m_item_07.m_len );
+				memcpy( m_item_08.m_txt, &m_line_buffer[m_item_08.m_pos], m_item_08.m_len );
+				memcpy( m_item_09.m_txt, &m_line_buffer[m_item_09.m_pos], m_item_09.m_len );
+				memcpy( m_item_10.m_txt, &m_line_buffer[m_item_10.m_pos], m_item_10.m_len );
+			}
+			catch( ... ) {
+			}
+		}
+	}
+};
+
+struct Define_Tail
+{
+	Define_Item m_item_01;
+	Define_Item m_item_02;
+	int32_t m_pos_end;
+
+	int32_t m_line_size;
+	char* m_line_buffer;
+
+	std::string m_EndString;
+	std::string m_CheckSum;
+
+	Define_Tail() {
+		m_item_01.m_len = 7;
+		m_item_02.m_len = 3;
+		// 位置计算 + 1 是分隔符 '|' 占位
+		m_item_01.m_pos = 0;                                     // 结束标识符 C7
+		m_item_02.m_pos = m_item_01.m_pos + m_item_01.m_len + 1; // 校验和     C3
+		m_pos_end = m_item_02.m_pos + m_item_02.m_len + 1;       // 换行符
+		m_item_01.Txt( m_item_01.m_len + 1 );
+		m_item_02.Txt( m_item_02.m_len + 1 );
+		m_line_size = m_pos_end;
+		m_line_buffer = nullptr;
+		try {
+			m_line_buffer = new char[m_line_size];
+			memset( m_line_buffer, 0, m_line_size );
+		}
+		catch( ... ) {
+		}
+		m_EndString = "";
+		m_CheckSum = "";
+	}
+
+	~Define_Tail() {
+		if( m_line_buffer != nullptr ) {
+			delete[] m_line_buffer;
+		}
+	}
+
+	void FillData( FILE* market_data_file ) {
+		if( m_line_buffer != nullptr ) {
+			try { // 防 m_txt 空
+				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
+				memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
+				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
+				m_EndString = m_item_01.m_txt;
+				m_CheckSum = m_item_02.m_txt;
+			}
+			catch( ... ) {
+			}
+		}
+	}
+
+	void Print() {
+		std::cout << m_EndString << "|";
+		std::cout << m_CheckSum << "|" << std::endl;
+	}
+};
 
 #pragma pack( pop )
 
