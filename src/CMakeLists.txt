@@ -215,6 +215,7 @@ IF (WIN32)
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp")
+	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_hgt")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf")
@@ -272,6 +273,12 @@ IF (WIN32)
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp"
 	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_hgt.dll" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_hgt.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_hgt.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_hgt"
+	)
     #INSTALL (
 	#	FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_ltb.dll" 
 	#		  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ltb/quoter_ltb.ini" 
@@ -296,6 +303,7 @@ ELSEIF ((UNIX) OR (APPLE))
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/extdlls")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp")
+	FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_hgt")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltb")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ltp")
     FILE (MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_tdf")
@@ -357,6 +365,13 @@ ELSEIF ((UNIX) OR (APPLE))
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.ini" 
 			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_ctp.xml" 
 	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_ctp" 
+		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
+	)
+    INSTALL (
+		FILES "${PROJECT_BINARY_DIR}/runtime/${PATH_FLAG_COMPILE}/quoter_hgt.so" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_hgt.ini" 
+			  "${PROJECT_SOURCE_DIR}/pluginx/quoter_ctp/quoter_hgt.xml" 
+	    DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/plugins/quoter_hgt" 
 		# PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ # 644
 	)
     INSTALL (

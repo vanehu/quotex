@@ -35,6 +35,9 @@
 #define QUOTER_CTP_EXP
 //#define QUOTER_CTP_IMP
 
+#define QUOTER_HGT_EXP
+//#define QUOTER_HGT_IMP
+
 #define QUOTER_LTB_EXP
 //#define QUOTER_LTB_IMP
 
@@ -72,6 +75,16 @@
 
 #ifdef QUOTER_CTP_IMP
     #define QUOTER_CTP_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_HGT_EXP
+    #define QUOTER_HGT_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_HGT_IMP
+    #define QUOTER_HGT_EXPIMP __declspec(dllimport)
 #endif
 
 //------------------------------//

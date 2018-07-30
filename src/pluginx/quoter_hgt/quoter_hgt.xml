@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="GB2312" standalone="no" ?>
-<Plugin Name="quoter_ctp" Version="1.0.0" CompatVersion="1.0.0" Experimental="False">
+<Plugin Name="quoter_hgt" Version="1.0.0" CompatVersion="1.0.0" Experimental="False">
     <Vendor>X-Lab</Vendor>
     <Copyright>Copyright 2018-2018 X-Lab All Rights Reserved</Copyright>
     <License>Commercial Usage And GNU Lesser General Public License Usage</License>
     <Category>扩展</Category>
-    <Description>上期期货行情插件</Description>
+    <Description>上证沪股通行情插件</Description>
     <Url>http://www.xlab.com</Url>
     <DependencyList>
     </DependencyList>
