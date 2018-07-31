@@ -96,10 +96,6 @@ struct ConSubMan
 struct Config // 保证均被赋值
 {
 	std::string m_market_data_folder;
-	std::string m_address;
-	std::string m_broker_id;
-	std::string m_username;
-	std::string m_password;
 	int32_t m_need_dump;
 	std::string m_dump_path;
 	int32_t m_data_compress;
@@ -347,11 +343,11 @@ struct Define_Head
 				memcpy( m_item_08.m_txt, &m_line_buffer[m_item_08.m_pos], m_item_08.m_len );
 				memcpy( m_item_09.m_txt, &m_line_buffer[m_item_09.m_pos], m_item_09.m_len );
 				m_BeginString = m_item_01.m_txt;
-				m_Version = StringTrim( m_item_02.m_txt, " " );
+				m_Version = basicx::StringTrim( m_item_02.m_txt, " " );
 				m_BodyLength = atoi( m_item_03.m_txt );
 				m_TotNumTradeReports = atoi( m_item_04.m_txt );
 				m_MDReportID = atoi( m_item_05.m_txt );
-				m_SenderCompID = StringTrim( m_item_06.m_txt, " " );
+				m_SenderCompID = basicx::StringTrim( m_item_06.m_txt, " " );
 				m_MDTime = m_item_07.m_txt;
 				m_MDUpdateType = atoi( m_item_08.m_txt );
 				m_MktStatus = atoi( m_item_09.m_txt ); // std::string -> int32_t
@@ -777,6 +773,271 @@ struct Define_Tail
 	void Print() {
 		std::cout << m_EndString << "|";
 		std::cout << m_CheckSum << "|" << std::endl;
+	}
+};
+
+struct Result_MD401
+{
+	// std::string m_MDStreamID;
+	std::string m_SecurityID;
+	std::string m_Symbol;
+	std::string m_SymbolEn;
+	int64_t m_TradeVolume;
+	double m_TotalValueTraded;
+	double m_PreClosePx;
+	double m_NominalPrice;
+	double m_HighPrice;
+	double m_LowPrice;
+	double m_TradePrice;
+	double m_BuyPrice1;
+	int32_t m_BuyVolume1;
+	double m_SellPrice1;
+	int32_t m_SellVolume1;
+	int32_t m_SecTradingStatus;
+	std::string m_Timestamp;
+
+	int32_t m_md_hour;
+	int32_t m_md_minute;
+	int32_t m_md_second;
+
+	Result_MD401() {
+		// m_MDStreamID = "";
+		m_SecurityID = "";
+		m_Symbol = "";
+		m_SymbolEn = "";
+		m_TradeVolume = 0;
+		m_TotalValueTraded = 0.0;
+		m_PreClosePx = 0.0;
+		m_NominalPrice = 0.0;
+		m_HighPrice = 0.0;
+		m_LowPrice = 0.0;
+		m_TradePrice = 0.0;
+		m_BuyPrice1 = 0.0;
+		m_BuyVolume1 = 0;
+		m_SellPrice1 = 0.0;
+		m_SellVolume1 = 0;
+		m_SecTradingStatus = 0;
+		m_Timestamp = "";
+
+		m_md_hour = 0;
+		m_md_minute = 0;
+		m_md_second = 0;
+	}
+
+	void FillData( Define_MD401& define_md ) {
+		try { // 防 m_txt 空
+			  // m_MDStreamID = define_md.m_item_01.m_txt;
+			m_SecurityID = define_md.m_item_02.m_txt;
+			m_Symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( define_md.m_item_03.m_txt ) ), "　" ) ); // "　"
+			m_SymbolEn = basicx::StringTrim( define_md.m_item_04.m_txt, " " );
+			m_TradeVolume = atoll( define_md.m_item_05.m_txt );
+			m_TotalValueTraded = atof( define_md.m_item_06.m_txt );
+			m_PreClosePx = atof( define_md.m_item_07.m_txt );
+			m_NominalPrice = atof( define_md.m_item_08.m_txt );
+			m_HighPrice = atof( define_md.m_item_09.m_txt );
+			m_LowPrice = atof( define_md.m_item_10.m_txt );
+			m_TradePrice = atof( define_md.m_item_11.m_txt );
+			m_BuyPrice1 = atof( define_md.m_item_12.m_txt );
+			m_BuyVolume1 = atoi( define_md.m_item_13.m_txt );
+			m_SellPrice1 = atof( define_md.m_item_14.m_txt );
+			m_SellVolume1 = atoi( define_md.m_item_15.m_txt );
+			m_SecTradingStatus = atoi( define_md.m_item_16.m_txt ); // std::string -> int32_t
+			m_Timestamp = define_md.m_item_17.m_txt;
+			if( m_Timestamp != "" ) { // HH:MM:SS.000
+				m_md_hour = atoi( m_Timestamp.substr( 0, 2 ).c_str() );
+				m_md_minute = atoi( m_Timestamp.substr( 3, 2 ).c_str() );
+				m_md_second = atoi( m_Timestamp.substr( 6, 2 ).c_str() );
+			}
+		}
+		catch( ... ) {
+		}
+	}
+
+	void Print() {
+		// std::cout << m_MDStreamID << "|";
+		std::cout << m_SecurityID << "|";
+		std::cout << basicx::StringToGB2312( m_Symbol ) << "|";
+		std::cout << m_SymbolEn << "|";
+		std::cout << m_TradeVolume << "|";
+		std::cout << m_TotalValueTraded << "|";
+		std::cout << m_PreClosePx << "|";
+		std::cout << m_NominalPrice << "|";
+		std::cout << m_HighPrice << "|";
+		std::cout << m_LowPrice << "|";
+		std::cout << m_TradePrice << "|";
+		std::cout << m_BuyPrice1 << "|";
+		std::cout << m_BuyVolume1 << "|";
+		std::cout << m_SellPrice1 << "|";
+		std::cout << m_SellVolume1 << "|";
+		std::cout << m_SecTradingStatus << "|";
+		std::cout << m_Timestamp << "|";
+		std::cout << "<" << m_md_hour << ":" << m_md_minute << ":" << m_md_second << ">" << std::endl;
+	}
+};
+
+struct Result_MD404
+{
+	// std::string m_MDStreamID;
+	std::string m_SecurityID;
+	std::string m_Symbol;
+	std::string m_SymbolEn;
+	std::string m_VCMStartTime;
+	std::string m_VCMEndTime;
+	double m_VCMRefPrice;
+	double m_VCMLowerPrice;
+	double m_VCMUpperPrice;
+	std::string m_Timestamp;
+
+	int32_t m_vcm_start_hour;
+	int32_t m_vcm_start_minute;
+	int32_t m_vcm_start_second;
+	int32_t m_vcm_end_hour;
+	int32_t m_vcm_end_minute;
+	int32_t m_vcm_end_second;
+	int32_t m_md_hour;
+	int32_t m_md_minute;
+	int32_t m_md_second;
+
+	Result_MD404() {
+		// m_MDStreamID = "";
+		m_SecurityID = "";
+		m_Symbol = "";
+		m_SymbolEn = "";
+		m_VCMStartTime = "";
+		m_VCMEndTime = "";
+		m_VCMRefPrice = 0.0;
+		m_VCMLowerPrice = 0.0;
+		m_VCMUpperPrice = 0.0;
+		m_Timestamp = "";
+
+		m_vcm_start_hour = 0;
+		m_vcm_start_minute = 0;
+		m_vcm_start_second = 0;
+		m_vcm_end_hour = 0;
+		m_vcm_end_minute = 0;
+		m_vcm_end_second = 0;
+		m_md_hour = 0;
+		m_md_minute = 0;
+		m_md_second = 0;
+	}
+
+	void FillData( Define_MD404& define_md ) {
+		try { // 防 m_txt 空
+			  // m_MDStreamID = define_md.m_item_01.m_txt;
+			m_SecurityID = define_md.m_item_02.m_txt;
+			m_Symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( define_md.m_item_03.m_txt ) ), "　" ) ); // "　"
+			m_SymbolEn = basicx::StringTrim( define_md.m_item_04.m_txt, " " );
+			m_VCMStartTime = define_md.m_item_05.m_txt;
+			m_VCMEndTime = define_md.m_item_06.m_txt;
+			m_VCMRefPrice = atof( define_md.m_item_07.m_txt );
+			m_VCMLowerPrice = atof( define_md.m_item_08.m_txt );
+			m_VCMUpperPrice = atof( define_md.m_item_09.m_txt );
+			m_Timestamp = define_md.m_item_10.m_txt;
+			if( m_VCMStartTime != "" ) { // HH:MM:SS
+				m_vcm_start_hour = atoi( m_VCMStartTime.substr( 0, 2 ).c_str() );
+				m_vcm_start_minute = atoi( m_VCMStartTime.substr( 3, 2 ).c_str() );
+				m_vcm_start_second = atoi( m_VCMStartTime.substr( 6, 2 ).c_str() );
+			}
+			if( m_VCMEndTime != "" ) { // HH:MM:SS
+				m_vcm_end_hour = atoi( m_VCMEndTime.substr( 0, 2 ).c_str() );
+				m_vcm_end_minute = atoi( m_VCMEndTime.substr( 3, 2 ).c_str() );
+				m_vcm_end_second = atoi( m_VCMEndTime.substr( 6, 2 ).c_str() );
+			}
+			if( m_Timestamp != "" ) { // HH:MM:SS.000
+				m_md_hour = atoi( m_Timestamp.substr( 0, 2 ).c_str() );
+				m_md_minute = atoi( m_Timestamp.substr( 3, 2 ).c_str() );
+				m_md_second = atoi( m_Timestamp.substr( 6, 2 ).c_str() );
+			}
+		}
+		catch( ... ) {
+		}
+	}
+
+	void Print() {
+		// std::cout << m_MDStreamID << "|";
+		std::cout << m_SecurityID << "|";
+		std::cout << basicx::StringToGB2312( m_Symbol ) << "|";
+		std::cout << m_SymbolEn << "|";
+		std::cout << m_VCMStartTime << "|";
+		std::cout << m_VCMEndTime << "|";
+		std::cout << m_VCMRefPrice << "|";
+		std::cout << m_VCMLowerPrice << "|";
+		std::cout << m_VCMUpperPrice << "|";
+		std::cout << m_Timestamp << "|";
+		std::cout << "<" << m_vcm_start_hour << ":" << m_vcm_start_minute << ":" << m_vcm_start_second << ">";
+		std::cout << "<" << m_vcm_end_hour << ":" << m_vcm_end_minute << ":" << m_vcm_end_second << ">";
+		std::cout << "<" << m_md_hour << ":" << m_md_minute << ":" << m_md_second << ">" << std::endl;
+	}
+};
+
+struct Result_MD405
+{
+	// std::string m_MDStreamID;
+	std::string m_SecurityID;
+	std::string m_Symbol;
+	std::string m_SymbolEn;
+	double m_CASRefPrice;
+	double m_CASLowerPrice;
+	double m_CASUpperPrice;
+	std::string m_OrdImbDirection;
+	int32_t m_OrdImbQty;
+	std::string m_Timestamp;
+
+	int32_t m_md_hour;
+	int32_t m_md_minute;
+	int32_t m_md_second;
+
+	Result_MD405() {
+		// m_MDStreamID = "";
+		m_SecurityID = "";
+		m_Symbol = "";
+		m_SymbolEn = "";
+		m_CASRefPrice = 0.0;
+		m_CASLowerPrice = 0.0;
+		m_CASUpperPrice = 0.0;
+		m_OrdImbDirection = "";
+		m_OrdImbQty = 0;
+		m_Timestamp = "";
+
+		m_md_hour = 0;
+		m_md_minute = 0;
+		m_md_second = 0;
+	}
+
+	void FillData( Define_MD405& define_md ) {
+		try { // 防 m_txt 空
+			  // m_MDStreamID = define_md.m_item_01.m_txt;
+			m_SecurityID = define_md.m_item_02.m_txt;
+			m_Symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( define_md.m_item_03.m_txt ) ), "　" ) ); // "　"
+			m_SymbolEn = basicx::StringTrim( define_md.m_item_04.m_txt, " " );
+			m_CASRefPrice = atof( define_md.m_item_05.m_txt );
+			m_CASLowerPrice = atof( define_md.m_item_06.m_txt );
+			m_CASUpperPrice = atof( define_md.m_item_07.m_txt );
+			m_OrdImbDirection = basicx::StringTrim( define_md.m_item_08.m_txt, " " );
+			m_OrdImbQty = atoi( define_md.m_item_09.m_txt );
+			m_Timestamp = define_md.m_item_10.m_txt;
+			if( m_Timestamp != "" ) { // HH:MM:SS.000
+				m_md_hour = atoi( m_Timestamp.substr( 0, 2 ).c_str() );
+				m_md_minute = atoi( m_Timestamp.substr( 3, 2 ).c_str() );
+				m_md_second = atoi( m_Timestamp.substr( 6, 2 ).c_str() );
+			}
+		}
+		catch( ... ) {
+		}
+	}
+
+	void Print() {
+		// std::cout << m_MDStreamID << "|";
+		std::cout << m_SecurityID << "|";
+		std::cout << basicx::StringToGB2312( m_Symbol ) << "|";
+		std::cout << m_SymbolEn << "|";
+		std::cout << m_CASRefPrice << "|";
+		std::cout << m_CASLowerPrice << "|";
+		std::cout << m_CASUpperPrice << "|";
+		std::cout << m_OrdImbDirection << "|";
+		std::cout << m_OrdImbQty << "|";
+		std::cout << m_Timestamp << "|";
+		std::cout << "<" << m_md_hour << ":" << m_md_minute << ":" << m_md_second << ">" << std::endl;
 	}
 };
 

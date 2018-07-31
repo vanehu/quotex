@@ -1478,8 +1478,6 @@ std::string QuoterCTP_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 	return "";
 }
 
-// 自定义 QuoterCTP 函数实现
-
 CThostFtdcMdSpiImpl::CThostFtdcMdSpiImpl( CThostFtdcMdApi* user_api, QuoterCTP_P* quoter_ctp_p )
 	: m_user_api( user_api )
 	, m_quoter_ctp_p( quoter_ctp_p )

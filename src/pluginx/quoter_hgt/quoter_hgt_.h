@@ -84,10 +84,8 @@ public:
 public:
 	bool CheckSingleMutex(); // 单例限制检测
 	void OnTimer();
-	void DoReSubscribe();
 	bool CreateDumpFolder();
 	void InitQuoteDataFile();
-	void InitApiSpi();
 
 	void MS_AddData_SnapshotStock( SnapshotStock_HGT& snapshot_stock_temp );
 
@@ -111,11 +109,12 @@ public:
 	void CommitResult( int32_t task_id, int32_t identity, int32_t code, std::string& data );
 	std::string OnErrorResult( int32_t ret_func, int32_t ret_code, std::string ret_info, int32_t encode );
 
+	void HandleMarketData();
+
 public:
 	HANDLE m_single_mutex; // 单例限制检测
 	thread_ptr m_thread_on_timer;
-	thread_ptr m_thread_init_api_spi;
-	bool m_subscribe_ok;
+	thread_ptr m_thread_handle_market_data;
 	std::vector<std::string> m_vec_contract;
 	int32_t m_subscribe_count;
 	

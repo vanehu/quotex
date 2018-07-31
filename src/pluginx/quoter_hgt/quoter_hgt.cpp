@@ -48,7 +48,6 @@ QuoterHGT_P::QuoterHGT_P()
 	, m_work_thread_number( CFG_WORK_THREAD_NUM )
 	, m_plugin_running( false )
 	, m_task_id( 0 )
-	, m_subscribe_ok( false )
 	, m_market_data_file_path( "" )
 	, m_log_cate( "<Quoter_HGT>" ) {
 	m_json_reader_builder["collectComments"] = false;
@@ -106,11 +105,6 @@ bool QuoterHGT_P::ReadConfig( std::string file_path ) {
 	m_configs.m_market_data_folder = node_plugin.child_value( "MarketDataFolder" );
 	m_market_data_file_path = m_configs.m_market_data_folder + "\\mktdt04.txt";
 
-	m_configs.m_address = node_plugin.child_value( "Address" );
-	m_configs.m_broker_id = node_plugin.child_value( "BrokerID" );
-	m_configs.m_username = node_plugin.child_value( "Username" );
-	m_configs.m_password = node_plugin.child_value( "Password" );
-
 	m_configs.m_need_dump = atoi( node_plugin.child_value( "NeedDump" ) );
 	m_configs.m_dump_path = node_plugin.child_value( "DumpPath" );
 	m_configs.m_data_compress = atoi( node_plugin.child_value( "DataCompress" ) );
@@ -119,7 +113,7 @@ bool QuoterHGT_P::ReadConfig( std::string file_path ) {
 	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
 
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6}", m_configs.m_market_data_folder, 
-	//	m_configs.m_address, m_configs.m_broker_id, m_configs.m_username, m_configs.m_password, m_configs.m_dump_time, m_configs.m_init_time );
+	//	m_configs.m_need_dump, m_configs.m_dump_path, m_configs.m_data_compress, m_configs.m_data_encode, m_configs.m_dump_time, m_configs.m_init_time );
 	//LogPrint( basicx::syslog_level::c_debug, log_info );
 
 	log_info = "插件参数配置信息读取完成。";
@@ -397,10 +391,10 @@ void QuoterHGT_P::OnTimer() {
 
 	try {
 		if( CreateDumpFolder() ) { // 含首次开启时文件创建
-			m_thread_init_api_spi = boost::make_shared<boost::thread>( boost::bind( &QuoterHGT_P::InitApiSpi, this ) );
+			m_thread_handle_market_data = boost::make_shared<boost::thread>( boost::bind( &QuoterHGT_P::HandleMarketData, this ) );
 
 			bool force_dump = false; // 避免瞬间多次调用 Dump 操作
-			bool do_resubscribe = false;
+			bool init_some_thing = false;
 			bool init_quote_data_file = false;
 			while( true ) {
 				for( size_t i = 0; i < (size_t)m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
@@ -429,9 +423,9 @@ void QuoterHGT_P::OnTimer() {
 				m_cache_snapshot_stock.m_comp_num = 0;
 				m_cache_snapshot_stock.m_send_num = 0;
 
-				if( now_time == m_configs.m_init_time && false == do_resubscribe ) {
-					DoReSubscribe();
-					do_resubscribe = true;
+				if( now_time == m_configs.m_init_time && false == init_some_thing ) {
+					// TODO：init some thing
+					init_some_thing = true;
 				}
 
 				if( 600 == now_time && false == init_quote_data_file ) {
@@ -444,7 +438,7 @@ void QuoterHGT_P::OnTimer() {
 				}
 
 				if( 500 == now_time ) {
-					do_resubscribe = false;
+					init_some_thing = false;
 					init_quote_data_file = false;
 				}
 			}
@@ -457,22 +451,6 @@ void QuoterHGT_P::OnTimer() {
 
 	log_info = "插件定时线程退出！";
 	LogPrint( basicx::syslog_level::c_warn, log_info );
-}
-
-void QuoterHGT_P::DoReSubscribe() {
-	std::string log_info;
-
-	log_info = "开始行情重新初始化 ....";
-	LogPrint( basicx::syslog_level::c_info, log_info );
-
-	// 重新初始化时不做退订，订阅在重登成功时更新。
-
-	Sleep( 1000 ); // 这里等待时间跟 InitApiSpi 退出耗时相关
-
-	m_thread_init_api_spi = boost::make_shared<boost::thread>( boost::bind( &QuoterHGT_P::InitApiSpi, this ) );
-
-	log_info = "行情重新初始化完成。";
-	LogPrint( basicx::syslog_level::c_info, log_info );
 }
 
 bool QuoterHGT_P::CreateDumpFolder() {
@@ -491,10 +469,10 @@ bool QuoterHGT_P::CreateDumpFolder() {
 	}
 	FindClose( handle_dump_folder );
 
-	dump_data_folder_path += "\\Stock";
+	dump_data_folder_path += "\\Stock_HGT";
 	CreateDirectoryA( dump_data_folder_path.c_str(), NULL );
 
-	m_cache_snapshot_stock.m_folder_path = dump_data_folder_path + "\\Market";
+	m_cache_snapshot_stock.m_folder_path = dump_data_folder_path + "\\Stock";
 	CreateDirectoryA( m_cache_snapshot_stock.m_folder_path.c_str(), NULL );
 
 	InitQuoteDataFile(); // 首次启动时
@@ -537,66 +515,6 @@ void QuoterHGT_P::InitQuoteDataFile() {
 	m_cache_snapshot_stock.m_comp_num = 0;
 	m_cache_snapshot_stock.m_send_num = 0;
 	m_cache_snapshot_stock.m_local_index = 0;
-}
-
-void QuoterHGT_P::InitApiSpi() {
-	std::string log_info;
-
-	m_subscribe_count = 0;
-
-	try {
-		log_info = "开始初始化接口 ....";
-		LogPrint( basicx::syslog_level::c_info, log_info );
-		std::string flow_path = m_syscfg->GetPath_ExtFolder() + "\\";
-		log_info = "初始化接口完成。等待连接响应 ....";
-		LogPrint( basicx::syslog_level::c_info, log_info );
-	}
-	catch( ... ) {
-		log_info = "初始化接口时发生未知错误！";
-		LogPrint( basicx::syslog_level::c_error, log_info );
-	}
-
-	log_info = "接口初始化线程停止阻塞！";
-	LogPrint( basicx::syslog_level::c_warn, log_info );
-
-	// 目前不做退订操作
-	//if( true == m_subscribe_ok ) { // 退订行情
-	//	m_subscribe_ok = false;
-
-	//	size_t contract_number = m_vec_contract.size();
-	//	char** contract = new char*[contract_number];
-	//	for( size_t i = 0; i < contract_number; i++ ) {
-	//	    contract[i] = const_cast<char*>(m_vec_contract[i].c_str());
-	//	}
-
-	//	int32_t result = m_user_api->UnSubscribeMarketData( contract, contract_number );
-	//	if( 0 == result ) {
-	//	    log_info = "发送行情 退订 请求成功。";
-	//	    LogPrint( basicx::syslog_level::c_info, log_info );
-	//	}
-	//	else {
-	//	    log_info = "发送行情 退订 请求失败！";
-	//	    LogPrint( basicx::syslog_level::c_error, log_info );
-	//	}
-
-	//	delete[] contract;
-	//}
-
-	//Sleep( 2500 ); // 等待退订反馈
-
-	// 目前清理在 DoReSubscribe 执行
-	//if( nullptr != m_user_api ) {
-	//	m_user_api->RegisterSpi( nullptr );
-	//	m_user_api->Release();
-	//	m_user_api = nullptr;
-	//}
-	//if( nullptr != m_user_spi ) {
-	//	delete m_user_spi;
-	//	m_user_spi = nullptr;
-	//}
-
-	log_info = "接口初始化线程退出！";
-	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
 void QuoterHGT_P::MS_AddData_SnapshotStock( SnapshotStock_HGT& snapshot_stock_temp ) {
@@ -1145,7 +1063,12 @@ std::string QuoterHGT_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 	return "";
 }
 
-// 自定义 QuoterHGT 函数实现
+void QuoterHGT_P::HandleMarketData() {
+	std::string log_info;
+
+	log_info = "行情数据处理线程退出！";
+	LogPrint( basicx::syslog_level::c_warn, log_info );
+}
 
 //void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* pDepthMarketData ) {
 //	SYSTEMTIME sys_time;
