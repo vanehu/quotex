@@ -25,7 +25,9 @@
 #include <map>
 #include <list>
 #include <vector>
+#include <thread>
 #include <atomic>
+#include <chrono>
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -141,7 +143,7 @@ struct SnapshotStock_HGT // 所有变量均会被赋值
 	char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
 	char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
 	char m_Symbol[33];          // 中文证券简称           C32    // MD401、MD404、MD405
-	char m_SymbolEn[16];        // 英文证券简称           C15    // MD401、MD404、MD405
+	char m_SymbolEn[17];        // 英文证券简称           C15/16 // MD401、MD404、MD405
 
 	int64_t m_TradeVolume;      // 成交数量               N16    // MD401
 	int64_t m_TotalValueTraded; // 成交金额               N16(3) // MD401 // 10000
@@ -156,8 +158,8 @@ struct SnapshotStock_HGT // 所有变量均会被赋值
 	int32_t m_SellVolume1;      // 申卖量一               N12    // MD401
 	int32_t m_SecTradingStatus; // 证券交易状态           C8     // MD401
 
-	int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSSmmm 精度：毫秒
-	int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSSmmm 精度：毫秒
+	int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSS000 精度：秒
+	int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSS000 精度：秒
 	uint32_t m_VCMRefPrice;     // 市调机制参考价         N11(3) // MD404 // 10000
 	uint32_t m_VCMLowerPrice;   // 市调机制下限价         N11(3) // MD404 // 10000
 	uint32_t m_VCMUpperPrice;   // 市调机制上限价         N11(3) // MD404 // 10000
@@ -168,7 +170,11 @@ struct SnapshotStock_HGT // 所有变量均会被赋值
 	char m_OrdImbDirection[2];  // 不能配对买卖盘方向     C1     // MD405
 	int32_t m_OrdImbQty;        // 不能配对买卖盘量       N12    // MD405
 
-	int32_t m_Timestamp;        // 行情时间               C12    // MD401、MD404、MD405 // HHMMSSmmm 精度：毫秒
+	//int32_t m_Timestamp;        // 行情时间               C12    // MD401、MD404、MD405 // HHMMSS000 精度：秒
+
+	int32_t m_QuoteTime;        // 行情时间 // HHMMSS000 精度：秒
+	int32_t m_LocalTime;        // 本地时间 // HHMMSSmmm 精度：毫秒
+	uint32_t m_LocalIndex;      // 本地序号
 };
 #endif
 
@@ -266,6 +272,7 @@ struct Define_Head
 	int32_t m_md_hour;
 	int32_t m_md_minute;
 	int32_t m_md_second;
+	int64_t m_market_data_time;
 
 	Define_Head() {
 		m_item_01.m_len = 6;
@@ -320,6 +327,7 @@ struct Define_Head
 		m_md_hour = 0;
 		m_md_minute = 0;
 		m_md_second = 0;
+		m_market_data_time = 0;
 	}
 
 	~Define_Head() {
@@ -358,6 +366,7 @@ struct Define_Head
 					m_md_hour = atoi( m_MDTime.substr( 9, 2 ).c_str() );
 					m_md_minute = atoi( m_MDTime.substr( 12, 2 ).c_str() );
 					m_md_second = atoi( m_MDTime.substr( 15, 2 ).c_str() );
+					m_market_data_time = m_md_year * 10000000000 + m_md_month * 100000000 + m_md_day * 1000000 + m_md_hour * 10000 + m_md_minute * 100 + m_md_second;
 				}
 			}
 			catch( ... ) {
