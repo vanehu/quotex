@@ -1078,8 +1078,7 @@ void QuoterHGT_P::HandleMarketData() {
 				define_head.FillData( market_data_file );
 				//define_head.Print();
 
-//				if( define_head.m_market_data_time > m_market_data_time ) {
-				{
+				if( define_head.m_market_data_time > m_market_data_time ) {
 					m_market_data_time = define_head.m_market_data_time;
 
 					SYSTEMTIME sys_time;
@@ -1152,8 +1151,7 @@ void QuoterHGT_P::HandleMarketData() {
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "行情数据源文件打开失败！{0}", m_market_data_file_path );
 			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
-//		std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
-		std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+		std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
 	}
 
 	log_info = "行情数据处理线程退出！";
