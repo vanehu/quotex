@@ -1078,7 +1078,8 @@ void QuoterHGT_P::HandleMarketData() {
 				define_head.FillData( market_data_file );
 				//define_head.Print();
 
-				if( define_head.m_market_data_time > m_market_data_time ) {
+//				if( define_head.m_market_data_time > m_market_data_time ) {
+				{
 					m_market_data_time = define_head.m_market_data_time;
 
 					SYSTEMTIME sys_time;
@@ -1088,19 +1089,20 @@ void QuoterHGT_P::HandleMarketData() {
 					strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
 
 					SnapshotStock_HGT snapshot_stock_temp;
-					memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
 
 					Define_Type define_type;
 					for( int32_t i = 0; i < define_head.m_TotNumTradeReports; ++i ) {
 						define_type.FillData( market_data_file );
 						//define_type.Print();
+
+						memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
 						if( "MD401" == define_type.m_MDStreamID ) {
 							Define_MD401 define_md;
 							define_md.FillData( market_data_file );
 							//Result_MD401 result_md;
 							//result_md.FillData( define_md );
 							//result_md.Print();
-							FillMarketData( snapshot_stock_temp, define_md );
+							FillMarketData( "MD401", snapshot_stock_temp, define_md );
 						}
 						else if( "MD404" == define_type.m_MDStreamID ) {
 							Define_MD404 define_md;
@@ -1108,7 +1110,7 @@ void QuoterHGT_P::HandleMarketData() {
 							//Result_MD404 result_md;
 							//result_md.FillData( define_md );
 							//result_md.Print();
-							FillMarketData( snapshot_stock_temp, define_md );
+							FillMarketData( "MD404", snapshot_stock_temp, define_md );
 						}
 						else if( "MD405" == define_type.m_MDStreamID ) {
 							Define_MD405 define_md;
@@ -1116,7 +1118,7 @@ void QuoterHGT_P::HandleMarketData() {
 							//Result_MD405 result_md;
 							//result_md.FillData( define_md );
 							//result_md.Print();
-							FillMarketData( snapshot_stock_temp, define_md );
+							FillMarketData( "MD405", snapshot_stock_temp, define_md );
 						}
 						snapshot_stock_temp.m_LocalTime = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
 						m_cache_snapshot_stock.m_local_index++;
@@ -1146,27 +1148,28 @@ void QuoterHGT_P::HandleMarketData() {
 			}
 		}
 		else {
-			std::this_thread::sleep_for( std::chrono::seconds( 4 ) );
+			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "行情数据源文件打开失败！{0}", m_market_data_file_path );
 			LogPrint( basicx::syslog_level::c_error, log_info );
 		}
-		std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
+//		std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
+		std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 	}
 
 	log_info = "行情数据处理线程退出！";
 	LogPrint( basicx::syslog_level::c_warn, log_info );
 }
 
-void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD401& market_data ) {
+void QuoterHGT_P::FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD401& market_data ) {
 	try { // 防 m_txt 空
-		memcpy( snapshot_stock.m_MDStreamID, market_data.m_item_01.m_txt, 5 ); // 行情数据类型 // C5
+		memcpy( snapshot_stock.m_MDStreamID, data_type.c_str(), data_type.length() ); // 行情数据类型 // C5
 		memcpy( snapshot_stock.m_SecurityID, market_data.m_item_02.m_txt, 5 ); // 证券代码 // C5
 		std::string symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( market_data.m_item_03.m_txt ) ), "　" ) ); // "　"
 		memcpy( snapshot_stock.m_Symbol, symbol.c_str(), symbol.length() ); // 中文证券简称 // C32
 		std::string symbol_en = basicx::StringTrim( market_data.m_item_04.m_txt, " " );
 		memcpy( snapshot_stock.m_SymbolEn, symbol_en.c_str(), symbol_en.length() ); // 英文证券简称 // C15/16
 		snapshot_stock.m_TradeVolume = atoll( market_data.m_item_05.m_txt ); // 成交数量
-		snapshot_stock.m_TotalValueTraded = (uint32_t)(atof( market_data.m_item_06.m_txt ) * 10000); // 成交金额 // 10000
+		snapshot_stock.m_TotalValueTraded = (int64_t)(atof( market_data.m_item_06.m_txt ) * 10000); // 成交金额 // 10000
 		snapshot_stock.m_PreClosePx = (uint32_t)(atof( market_data.m_item_07.m_txt ) * 10000); // 昨日收盘价 // 10000
 		snapshot_stock.m_NominalPrice = (uint32_t)(atof( market_data.m_item_08.m_txt ) * 10000); // 按盘价 // 10000
 		snapshot_stock.m_HighPrice = (uint32_t)(atof( market_data.m_item_09.m_txt ) * 10000); // 最高价 // 10000
@@ -1186,12 +1189,14 @@ void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD40
 		}
 	}
 	catch( ... ) {
+		std::string log_info = "处理 MD401 数据发生未知异常！";
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
 
-void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD404& market_data ) {
+void QuoterHGT_P::FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD404& market_data ) {
 	try { // 防 m_txt 空
-		memcpy( snapshot_stock.m_MDStreamID, market_data.m_item_01.m_txt, 5 ); // 行情数据类型 // C5
+		memcpy( snapshot_stock.m_MDStreamID, data_type.c_str(), data_type.length() ); // 行情数据类型 // C5
 		memcpy( snapshot_stock.m_SecurityID, market_data.m_item_02.m_txt, 5 ); // 证券代码 // C5
 		std::string symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( market_data.m_item_03.m_txt ) ), "　" ) ); // "　"
 		memcpy( snapshot_stock.m_Symbol, symbol.c_str(), symbol.length() ); // 中文证券简称 // C32
@@ -1223,12 +1228,14 @@ void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD40
 		snapshot_stock.m_VCMUpperPrice = (uint32_t)(atof( market_data.m_item_09.m_txt ) * 10000); // 市调机制上限价 // 10000
 	}
 	catch( ... ) {
+		std::string log_info = "处理 MD404 数据发生未知异常！";
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
 
-void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD405& market_data ) {
+void QuoterHGT_P::FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD405& market_data ) {
 	try { // 防 m_txt 空
-		memcpy( snapshot_stock.m_MDStreamID, market_data.m_item_01.m_txt, 5 ); // 行情数据类型 // C5
+		memcpy( snapshot_stock.m_MDStreamID, data_type.c_str(), data_type.length() ); // 行情数据类型 // C5
 		memcpy( snapshot_stock.m_SecurityID, market_data.m_item_02.m_txt, 5 ); // 证券代码 // C5
 		std::string symbol = basicx::StringToUTF8( basicx::StringTrim( basicx::StringToGB2312( basicx::UTF16LE_To_UTF8( market_data.m_item_03.m_txt ) ), "　" ) ); // "　"
 		memcpy( snapshot_stock.m_Symbol, symbol.c_str(), symbol.length() ); // 中文证券简称 // C32
@@ -1249,85 +1256,10 @@ void QuoterHGT_P::FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD40
 		}
 	}
 	catch( ... ) {
+		std::string log_info = "处理 MD405 数据发生未知异常！";
+		LogPrint( basicx::syslog_level::c_error, log_info );
 	}
 }
-
-//void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* pDepthMarketData ) {
-//	SYSTEMTIME sys_time;
-//	GetLocalTime( &sys_time );
-//	tm now_time_t = basicx::GetNowTime();
-//	char now_date_temp[9];
-//	strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
-//
-//	SnapshotStock_HGT snapshot_stock_temp;
-//	memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
-//
-//	strcpy_s( snapshot_stock_temp.m_code, pDepthMarketData->InstrumentID ); // 合约代码
-//	strcpy_s( snapshot_stock_temp.m_name, "" ); // 合约名称 // 无
-//	strcpy_s( snapshot_stock_temp.m_type, "F" ); // 合约类型
-//	strcpy_s( snapshot_stock_temp.m_market, pDepthMarketData->ExchangeID ); // 合约市场
-//	strcpy_s( snapshot_stock_temp.m_status, "N" ); // 合约状态：正常
-//	snapshot_stock_temp.m_last = (uint32_t)(pDepthMarketData->LastPrice * 10000); // 最新价 // 10000
-//	snapshot_stock_temp.m_open = (uint32_t)(pDepthMarketData->OpenPrice * 10000); // 开盘价 // 10000
-//	snapshot_stock_temp.m_high = (uint32_t)(pDepthMarketData->HighestPrice * 10000); // 最高价 // 10000
-//	snapshot_stock_temp.m_low = (uint32_t)(pDepthMarketData->LowestPrice * 10000); // 最低价 // 10000
-//	snapshot_stock_temp.m_close = (uint32_t)(pDepthMarketData->ClosePrice * 10000); // 收盘价 // 10000
-//	snapshot_stock_temp.m_pre_close = (uint32_t)(pDepthMarketData->PreClosePrice * 10000); // 昨收价 // 10000
-//	snapshot_stock_temp.m_volume = pDepthMarketData->Volume; // 成交量
-//	snapshot_stock_temp.m_turnover = (int64_t)(pDepthMarketData->Turnover * 10000); // 成交额 // 10000
-//	snapshot_stock_temp.m_ask_price[0] = (uint32_t)(pDepthMarketData->AskPrice1 * 10000); // 卖价 1 // 10000
-//	snapshot_stock_temp.m_ask_volume[0] = pDepthMarketData->AskVolume1; // 卖量 1
-//	snapshot_stock_temp.m_ask_price[1] = (uint32_t)(pDepthMarketData->AskPrice2 * 10000); // 卖价 2 // 10000
-//	snapshot_stock_temp.m_ask_volume[1] = pDepthMarketData->AskVolume2; // 卖量 2
-//	snapshot_stock_temp.m_ask_price[2] = (uint32_t)(pDepthMarketData->AskPrice3 * 10000); // 卖价 3 // 10000
-//	snapshot_stock_temp.m_ask_volume[2] = pDepthMarketData->AskVolume3; // 卖量 3
-//	snapshot_stock_temp.m_ask_price[3] = (uint32_t)(pDepthMarketData->AskPrice4 * 10000); // 卖价 4 // 10000
-//	snapshot_stock_temp.m_ask_volume[3] = pDepthMarketData->AskVolume4; // 卖量 4
-//	snapshot_stock_temp.m_ask_price[4] = (uint32_t)(pDepthMarketData->AskPrice5 * 10000); // 卖价 5 // 10000
-//	snapshot_stock_temp.m_ask_volume[4] = pDepthMarketData->AskVolume5; // 卖量 5
-//	snapshot_stock_temp.m_bid_price[0] = (uint32_t)(pDepthMarketData->BidPrice1 * 10000); // 买价 1 // 10000
-//	snapshot_stock_temp.m_bid_volume[0] = pDepthMarketData->BidVolume1; // 买量 1
-//	snapshot_stock_temp.m_bid_price[1] = (uint32_t)(pDepthMarketData->BidPrice2 * 10000); // 买价 2 // 10000
-//	snapshot_stock_temp.m_bid_volume[1] = pDepthMarketData->BidVolume2; // 买量 2
-//	snapshot_stock_temp.m_bid_price[2] = (uint32_t)(pDepthMarketData->BidPrice3 * 10000); // 买价 3 // 10000
-//	snapshot_stock_temp.m_bid_volume[2] = pDepthMarketData->BidVolume3; // 买量 3
-//	snapshot_stock_temp.m_bid_price[3] = (uint32_t)(pDepthMarketData->BidPrice4 * 10000); // 买价 4 // 10000
-//	snapshot_stock_temp.m_bid_volume[3] = pDepthMarketData->BidVolume4; // 买量 4
-//	snapshot_stock_temp.m_bid_price[4] = (uint32_t)(pDepthMarketData->BidPrice5 * 10000); // 买价 5 // 10000
-//	snapshot_stock_temp.m_bid_volume[4] = pDepthMarketData->BidVolume5; // 买量 5
-//	snapshot_stock_temp.m_high_limit = (uint32_t)(pDepthMarketData->UpperLimitPrice * 10000); // 涨停价 // 10000
-//	snapshot_stock_temp.m_low_limit = (uint32_t)(pDepthMarketData->LowerLimitPrice * 10000); // 跌停价 // 10000
-//	snapshot_stock_temp.m_settle = (uint32_t)(pDepthMarketData->SettlementPrice * 10000); // 今日结算价 // 10000
-//	snapshot_stock_temp.m_pre_settle = (uint32_t)(pDepthMarketData->PreSettlementPrice * 10000); // 昨日结算价 // 10000
-//	snapshot_stock_temp.m_position = (int32_t)pDepthMarketData->OpenInterest; // 今日持仓量
-//	snapshot_stock_temp.m_pre_position = (int32_t)pDepthMarketData->PreOpenInterest; // 昨日持仓量
-//	snapshot_stock_temp.m_average = (uint32_t)(pDepthMarketData->AveragePrice * 10000); // 均价 // 10000
-//	snapshot_stock_temp.m_up_down = 0; // 涨跌 // 10000 // 无
-//	snapshot_stock_temp.m_up_down_rate = 0; // 涨跌幅度 // 10000 // 无
-//	snapshot_stock_temp.m_swing = 0; // 振幅 // 10000 // 无
-//	snapshot_stock_temp.m_delta = (int32_t)(pDepthMarketData->CurrDelta * 10000); // 今日虚实度 // 10000
-//	snapshot_stock_temp.m_pre_delta = (int32_t)(pDepthMarketData->PreDelta * 10000); // 昨日虚实度 // 10000
-//	snapshot_stock_temp.m_quote_date = atoi( pDepthMarketData->TradingDay ); // 行情日期 // YYYYMMDD
-//	char c_quote_time[12] = { 0 };
-//	sprintf( c_quote_time, "%s%03d", pDepthMarketData->UpdateTime, pDepthMarketData->UpdateMillisec ); // HH:MM:SSmmm
-//	std::string s_quote_time( c_quote_time );
-//	basicx::StringReplace( s_quote_time, ":", "" );
-//	snapshot_stock_temp.m_quote_time = atoi( s_quote_time.c_str() ); // 行情时间 // HHMMSSmmm 精度：毫秒
-//	snapshot_stock_temp.m_local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // 本地日期 // YYYYMMDD
-//	snapshot_stock_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
-//	m_quoter_hgt_p->m_cache_snapshot_stock.m_local_index++;
-//	snapshot_stock_temp.m_local_index = m_quoter_hgt_p->m_cache_snapshot_stock.m_local_index; // 本地序号
-//
-//	m_quoter_hgt_p->m_cache_snapshot_stock.m_recv_num++;
-//
-//	m_quoter_hgt_p->MS_AddData_SnapshotStock( snapshot_stock_temp );
-//
-//	//std::string log_info;
-//	//FormatLibrary::StandardLibrary::FormatTo( log_info, "行情反馈：合约:{0} 市场:{1} 现价:{2} 最高价:{3} 最低价:{4} 卖一价:{5} 卖一量:{6} 买一价:{7} 买一量:{8}", 
-//	//	pDepthMarketData->InstrumentID, pDepthMarketData->ExchangeID, pDepthMarketData->LastPrice, pDepthMarketData->HighestPrice, pDepthMarketData->LowestPrice, 
-//	//	pDepthMarketData->AskPrice1, pDepthMarketData->AskVolume1, pDepthMarketData->BidPrice1, pDepthMarketData->BidVolume1 );
-//	//m_quoter_hgt_p->LogPrint( basicx::syslog_level::c_debug, log_info );
-//}
 
 // 预设 QuoterHGT 函数实现
 

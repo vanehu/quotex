@@ -110,9 +110,9 @@ public:
 	std::string OnErrorResult( int32_t ret_func, int32_t ret_code, std::string ret_info, int32_t encode );
 
 	void HandleMarketData();
-	void FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD401& market_data );
-	void FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD404& market_data );
-	void FillMarketData( SnapshotStock_HGT& snapshot_stock, Define_MD405& market_data );
+	void FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD401& market_data );
+	void FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD404& market_data );
+	void FillMarketData( std::string data_type, SnapshotStock_HGT& snapshot_stock, Define_MD405& market_data );
 
 public:
 	HANDLE m_single_mutex; // µ¥ÀýÏÞÖÆ¼ì²â
