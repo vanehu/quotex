@@ -44,6 +44,9 @@
 #define QUOTER_LTP_EXP
 //#define QUOTER_LTP_IMP
 
+#define QUOTER_SZB_EXP
+//#define QUOTER_SZB_IMP
+
 #define QUOTER_TDF_EXP
 //#define QUOTER_TDF_IMP
 
@@ -105,6 +108,16 @@
 
 #ifdef QUOTER_LTP_IMP
     #define QUOTER_LTP_EXPIMP __declspec(dllimport)
+#endif
+
+//------------------------------//
+
+#ifdef QUOTER_SZB_EXP
+#define QUOTER_SZB_EXPIMP __declspec(dllexport)
+#endif
+
+#ifdef QUOTER_SZB_IMP
+#define QUOTER_SZB_EXPIMP __declspec(dllimport)
 #endif
 
 //------------------------------//
