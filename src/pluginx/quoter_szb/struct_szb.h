@@ -97,7 +97,11 @@ struct ConSubMan
 
 struct Config // 保证均被赋值
 {
-	std::string m_market_data_folder;
+	std::string m_address;
+	int32_t m_port;
+	std::string m_username;
+	std::string m_password;
+	int32_t m_timeout;
 	int32_t m_need_dump;
 	std::string m_dump_path;
 	int32_t m_data_compress;
