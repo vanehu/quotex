@@ -50,13 +50,13 @@
 typedef boost::shared_ptr<boost::thread> thread_ptr;
 typedef boost::shared_ptr<boost::asio::io_service> service_ptr;
 
-#define SNAPSHOT_STOCK_SZB_V1
+#define SNAPSHOT_STOCK_SGT_V1
 
-#ifdef SNAPSHOT_STOCK_SZB_V1
-    #define SNAPSHOT_STOCK_SZB_VERSION '1'
+#ifdef SNAPSHOT_STOCK_SGT_V1
+    #define SNAPSHOT_STOCK_SGT_VERSION '1'
 #endif
-#ifdef SNAPSHOT_STOCK_SZB_V2
-    #define SNAPSHOT_STOCK_SZB_VERSION '2'
+#ifdef SNAPSHOT_STOCK_SGT_V2
+    #define SNAPSHOT_STOCK_SGT_VERSION '2'
 #endif
 
 #pragma pack( push )
@@ -141,8 +141,8 @@ public:
 	std::vector<T>* m_vec_cache_out;
 };
 
-#ifdef SNAPSHOT_STOCK_SZB_V1
-struct SnapshotStock_SZB // 所有变量均会被赋值
+#ifdef SNAPSHOT_STOCK_SGT_V1
+struct SnapshotStock_SGT // 所有变量均会被赋值
 {
 	char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
 	char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
@@ -180,8 +180,8 @@ struct SnapshotStock_SZB // 所有变量均会被赋值
 };
 #endif
 
-#ifdef SNAPSHOT_STOCK_SZB_V2
-struct SnapshotStock_SZB // 所有变量均会被赋值
+#ifdef SNAPSHOT_STOCK_SGT_V2
+struct SnapshotStock_SGT // 所有变量均会被赋值
 {
 };
 #endif

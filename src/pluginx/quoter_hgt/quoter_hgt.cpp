@@ -528,7 +528,7 @@ void QuoterHGT_P::MS_AddData_SnapshotStock( SnapshotStock_HGT& snapshot_stock_te
 		if( Z_OK == result ) { // 数据已压缩
 			m_cache_snapshot_stock.m_comp_num++;
 			std::string quote_data( (char*)m_output_buf_snapshot_stock, output_buf_len_snapshot_stock );
-			quote_data = TD_FUNC_QUOTE_DATA_TRANSACTION_HGT_HEAD + quote_data;
+			quote_data = TD_FUNC_QUOTE_DATA_SNAPSHOT_STOCK_HGT_HEAD + quote_data;
 
 			// 先给全市场的吧，全市场订阅者可能还要自己进行过滤
 
