@@ -448,7 +448,7 @@ void QuoterCTP_P::OnTimer() {
 			bool init_quote_data_file = false;
 			while( true ) {
 				for( size_t i = 0; i < (size_t)m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
-					Sleep( 1000 );
+					std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
 					//if( 前置行情服务器启动 )
 					//{
 					//	DumpSnapshotFuture();
@@ -528,7 +528,7 @@ void QuoterCTP_P::DoReSubscribe() {
 		m_user_spi = nullptr;
 	}
 
-	Sleep( 1000 ); // 这里等待时间跟 InitApiSpi 退出耗时相关
+	std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) ); // 这里等待时间跟 InitApiSpi 退出耗时相关
 
 	m_thread_init_api_spi = boost::make_shared<boost::thread>( boost::bind( &QuoterCTP_P::InitApiSpi, this ) );
 
@@ -652,7 +652,7 @@ void QuoterCTP_P::InitApiSpi() {
 	//	delete[] contract;
 	//}
 
-	//Sleep( 2500 ); // 等待退订反馈
+	//std::this_thread::sleep_for( std::chrono::milliseconds( 2500 ) ); // 等待退订反馈
 
 	// 目前清理在 DoReSubscribe 执行
 	//if( nullptr != m_user_api ) {
@@ -819,7 +819,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 
 		int32_t time_wait = 0;
 		while( false == user_spi->m_connect_ok && time_wait < 5000 ) { // 最多等待 5 秒
-			Sleep( 100 );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 			time_wait += 100;
 		}
 		if( false == user_spi->m_connect_ok ) {
@@ -845,7 +845,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 					if( true == user_spi->m_last_rsp_is_error ) {
 						break;
 					}
-					Sleep( 100 );
+					std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 					time_wait += 100;
 				}
 			}
@@ -870,7 +870,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 
 					int32_t time_wait = 0;
 					while( false == user_spi->m_qry_instrument && time_wait < 5000 ) { // 最多等待 5 秒
-						Sleep( 100 );
+						std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 						time_wait += 100;
 					}
 				}
@@ -898,7 +898,7 @@ void QuoterCTP_P::GetSubListFromCTP() { // 实盘测试显示从 CTP 查询得到的合约列表
 				//		if( true == user_spi->m_last_rsp_is_error ) {
 				//		    break;
 				//	    }
-				//		Sleep( 100 );
+				//		std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 				//		time_wait += 100;
 				//	}
 				//}
@@ -1171,7 +1171,7 @@ void QuoterCTP_P::HandleUserRequest() {
 				m_user_request_list_lock.unlock();
 			}
 
-			Sleep( 1 );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 		}
 	} // try
 	catch( ... ) {

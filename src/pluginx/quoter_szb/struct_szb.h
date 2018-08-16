@@ -192,19 +192,16 @@ struct MDGW_Heartbeat
 	MDGW_Tailer mdgw_tailer;
 };
 
-struct MDGW_Heartbeat_Body
-{
-};
-
 #define DEF_MDGW_MSG_TYPE_LOGON 1
 #define DEF_MDGW_MSG_TYPE_LOGOUT 2
 #define DEF_MDGW_MSG_TYPE_HEARTBEAT 3
+#define DEF_MDGW_MSG_TYPE_SNAPSHOT_STOCK_SGT 306311 // 港股实时行情
 
-uint32_t g_size_mdgw_header = sizeof( MDGW_Header );
-uint32_t g_size_mdgw_tailer = sizeof( MDGW_Tailer );
-uint32_t g_size_mdgw_logon_body = sizeof( MDGW_Logon_Body );
-uint32_t g_size_mdgw_logout_body = sizeof( MDGW_Logout_Body );
-uint32_t g_size_mdgw_heartbeat_body = sizeof( MDGW_Heartbeat_Body ); // 0
+uint32_t g_size_mdgw_header = sizeof( MDGW_Header ); // 8
+uint32_t g_size_mdgw_tailer = sizeof( MDGW_Tailer ); // 4
+uint32_t g_size_mdgw_logon_body = sizeof( MDGW_Logon_Body ); // 92
+uint32_t g_size_mdgw_logout_body = sizeof( MDGW_Logout_Body ); // 204
+uint32_t g_size_mdgw_heartbeat_body = 0; // 空结构体长度为 1
 
 uint32_t MDGW_GenerateCheckSum( char* buffer, uint32_t bufer_length ) {
 	uint32_t check_sum = 0;

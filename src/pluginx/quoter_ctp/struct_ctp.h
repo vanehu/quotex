@@ -26,6 +26,7 @@
 #include <list>
 #include <vector>
 #include <atomic>
+#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>

@@ -400,7 +400,7 @@ void QuoterHGT_P::OnTimer() {
 			bool init_quote_data_file = false;
 			while( true ) {
 				for( size_t i = 0; i < (size_t)m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
-					Sleep( 1000 );
+					std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
 					//if( 前置行情服务器启动 )
 					//{
 					//	DumpSnapshotStock();
@@ -758,7 +758,7 @@ void QuoterHGT_P::HandleUserRequest() {
 				m_user_request_list_lock.unlock();
 			}
 
-			Sleep( 1 );
+			std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 		}
 	} // try
 	catch( ... ) {
