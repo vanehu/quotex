@@ -19,8 +19,8 @@
 * Be sure to retain the above copyright notice and conditions.
 */
 
-#ifndef QUOTER_SZB_STRUCT_SZB_H
-#define QUOTER_SZB_STRUCT_SZB_H
+#ifndef QUOTER_SGT_STRUCT_SGT_H
+#define QUOTER_SGT_STRUCT_SGT_H
 
 #include <map>
 #include <list>
@@ -45,7 +45,7 @@
 #include <common/assist.h>
 #include <network/server.h>
 
-#include "define_szb.h"
+#include "define_sgt.h"
 
 typedef boost::shared_ptr<boost::thread> thread_ptr;
 typedef boost::shared_ptr<boost::asio::io_service> service_ptr;
@@ -281,4 +281,4 @@ struct SnapshotStock_SGT // 所有变量均会被赋值
 
 #pragma pack( pop )
 
-#endif // QUOTER_SZB_STRUCT_SZB_H
+#endif // QUOTER_SGT_STRUCT_SGT_H

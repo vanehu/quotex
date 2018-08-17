@@ -19,13 +19,13 @@
 * Be sure to retain the above copyright notice and conditions.
 */
 
-#ifndef QUOTER_SZB_DEFINE_H
-#define QUOTER_SZB_DEFINE_H
+#ifndef QUOTER_SGT_DEFINE_H
+#define QUOTER_SGT_DEFINE_H
 
 #include "../../global/define.h"
 
 // 插件定义
-#define PLUGIN_NAME "quoter_szb" // 插件名称
+#define PLUGIN_NAME "quoter_sgt" // 插件名称
 #define PLUGIN_NAME_CN "深 证 二 进 制 行 情 插 件" // 插件中文名称
 #define PLUGIN_VERSION "V0.1.1-Beta Build 20180817" // 插件版本号
 
@@ -34,4 +34,4 @@
 // 插件自定义参数
 #define CFG_WORK_THREAD_NUM 1 // 输入输出服务工作线程数
 
-#endif // QUOTER_SZB_DEFINE_H
+#endif // QUOTER_SGT_DEFINE_H

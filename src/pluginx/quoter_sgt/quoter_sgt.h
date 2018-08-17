@@ -19,8 +19,8 @@
 * Be sure to retain the above copyright notice and conditions.
 */
 
-#ifndef QUOTER_SZB_QUOTER_SZB_H
-#define QUOTER_SZB_QUOTER_SZB_H
+#ifndef QUOTER_SGT_QUOTER_SGT_H
+#define QUOTER_SGT_QUOTER_SGT_H
 
 #include <string>
 
@@ -28,13 +28,13 @@
 
 #include "../../global/compile.h"
 
-class QuoterSZB_P;
+class QuoterSGT_P;
 
-class QUOTER_SZB_EXPIMP QuoterSZB : public basicx::Plugins_X
+class QUOTER_SGT_EXPIMP QuoterSGT : public basicx::Plugins_X
 {
 public:
-	QuoterSZB();
-	~QuoterSZB();
+	QuoterSGT();
+	~QuoterSGT();
 
 public:
 	virtual bool Initialize() override;
@@ -47,10 +47,10 @@ public:
 	virtual bool AssignTask( int32_t task_id, int32_t identity, int32_t code, std::string& data ) override;
 
 private:
-	QuoterSZB_P* m_quoter_szb_p;
+	QuoterSGT_P* m_quoter_sgt_p;
 
 // 自定义成员函数和变量
 
 };
 
-#endif // QUOTER_SZB_QUOTER_SZB_H
+#endif // QUOTER_SGT_QUOTER_SGT_H
