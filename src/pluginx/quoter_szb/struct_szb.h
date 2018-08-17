@@ -99,8 +99,11 @@ struct Config // 保证均被赋值
 {
 	std::string m_address;
 	int32_t m_port;
-	std::string m_username;
+	std::string m_username; // = m_target_comp_id
 	std::string m_password;
+	std::string m_sender_comp_id;
+	std::string m_target_comp_id; // 登录用户名
+	std::string m_app_ver_id; // 文档版本号
 	int32_t m_timeout;
 	int32_t m_need_dump;
 	std::string m_dump_path;

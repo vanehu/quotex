@@ -27,7 +27,7 @@
 // 插件定义
 #define PLUGIN_NAME "quoter_szb" // 插件名称
 #define PLUGIN_NAME_CN "深 证 二 进 制 行 情 插 件" // 插件中文名称
-#define PLUGIN_VERSION "V0.1.1-Beta Build 20180806" // 插件版本号
+#define PLUGIN_VERSION "V0.1.1-Beta Build 20180817" // 插件版本号
 
 // 插件自定义消息
 
