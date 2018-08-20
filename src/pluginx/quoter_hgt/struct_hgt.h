@@ -140,41 +140,65 @@ public:
 #ifdef SNAPSHOT_STOCK_HGT_V1
 struct SnapshotStock_HGT // 所有变量均会被赋值
 {
-	char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
-	char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
-	char m_Symbol[33];          // 中文证券简称           C32    // MD401、MD404、MD405
-	char m_SymbolEn[17];        // 英文证券简称           C15/16 // MD401、MD404、MD405
+	char m_code[8]; // 证券代码
+	char m_name[33]; // 证券名称 // 中文名称
+	char m_type[6]; // 证券类型 // "H"
+	char m_market[6]; // 证券市场 // "HK"
+	char m_status[2]; // 证券状态 // "N"、"S"、"X"
+	uint32_t m_last; // 最新价 // 10000
+	uint32_t m_nominal; // 按盘价 // 10000
+	uint32_t m_high; // 最高价 // 10000
+	uint32_t m_low; // 最低价 // 10000
+	uint32_t m_close; // 收盘价 // 10000
+	uint32_t m_pre_close; // 昨收价 // 10000
+	int64_t m_volume; // 成交量
+	int64_t m_turnover; // 成交额 // 10000
+	uint32_t m_ask_price[10]; // 申卖价 // 10000
+	int32_t m_ask_volume[10]; // 申卖量
+	uint32_t m_bid_price[10]; // 申买价 // 10000
+	int32_t m_bid_volume[10]; // 申买量
+	uint32_t m_high_limit; // 涨停价 // 10000
+	uint32_t m_low_limit; // 跌停价 // 10000
+	int32_t m_trade_count; // 成交笔数 // 无
+	int32_t m_vcm_start_time; // 冷静期开始时间 // HHMMSS000 精度：秒
+	int32_t m_vcm_end_time; // 冷静期结束时间 // HHMMSS000 精度：秒
+	int32_t m_quote_time; // 行情时间 // HHMMSS000 精度：秒
+	int32_t m_local_time; // 本地时间 // HHMMSSmmm 精度：毫秒
+	uint32_t m_local_index; // 本地序号
 
-	int64_t m_TradeVolume;      // 成交数量               N16    // MD401
-	int64_t m_TotalValueTraded; // 成交金额               N16(3) // MD401 // 10000
-	uint32_t m_PreClosePx;      // 昨日收盘价             N11(3) // MD401 // 10000
-	uint32_t m_NominalPrice;    // 按盘价                 N11(3) // MD401 // 10000
-	uint32_t m_HighPrice;       // 最高价                 N11(3) // MD401 // 10000
-	uint32_t m_LowPrice;        // 最低价                 N11(3) // MD401 // 10000
-	uint32_t m_TradePrice;      // 最新价                 N11(3) // MD401 // 10000
-	uint32_t m_BuyPrice1;       // 申买价一               N11(3) // MD401 // 10000
-	int32_t m_BuyVolume1;       // 申买量一               N12    // MD401
-	uint32_t m_SellPrice1;      // 申卖价一               N11(3) // MD401 // 10000
-	int32_t m_SellVolume1;      // 申卖量一               N12    // MD401
-	int32_t m_SecTradingStatus; // 证券交易状态           C8     // MD401
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
+	//char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
+	//char m_Symbol[33];          // 中文证券简称           C32    // MD401、MD404、MD405
+	//char m_SymbolEn[17];        // 英文证券简称           C15/16 // MD401、MD404、MD405
 
-	int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSS000 精度：秒
-	int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSS000 精度：秒
-	uint32_t m_VCMRefPrice;     // 市调机制参考价         N11(3) // MD404 // 10000
-	uint32_t m_VCMLowerPrice;   // 市调机制下限价         N11(3) // MD404 // 10000
-	uint32_t m_VCMUpperPrice;   // 市调机制上限价         N11(3) // MD404 // 10000
+	//int64_t m_TradeVolume;      // 成交数量               N16    // MD401
+	//int64_t m_TotalValueTraded; // 成交金额               N16(3) // MD401 // 10000
+	//uint32_t m_PreClosePx;      // 昨日收盘价             N11(3) // MD401 // 10000
+	//uint32_t m_NominalPrice;    // 按盘价                 N11(3) // MD401 // 10000
+	//uint32_t m_HighPrice;       // 最高价                 N11(3) // MD401 // 10000
+	//uint32_t m_LowPrice;        // 最低价                 N11(3) // MD401 // 10000
+	//uint32_t m_TradePrice;      // 最新价                 N11(3) // MD401 // 10000
+	//uint32_t m_BuyPrice1;       // 申买价一               N11(3) // MD401 // 10000
+	//int32_t m_BuyVolume1;       // 申买量一               N12    // MD401
+	//uint32_t m_SellPrice1;      // 申卖价一               N11(3) // MD401 // 10000
+	//int32_t m_SellVolume1;      // 申卖量一               N12    // MD401
+	//int32_t m_SecTradingStatus; // 证券交易状态           C8     // MD401
 
-	uint32_t m_CASRefPrice;     // 收盘集合竞价时段参考价 N11(3) // MD405 // 10000
-	uint32_t m_CASLowerPrice;   // 收盘集合竞价时段下限价 N11(3) // MD405 // 10000
-	uint32_t m_CASUpperPrice;   // 收盘集合竞价时段上限价 N11(3) // MD405 // 10000
-	char m_OrdImbDirection[2];  // 不能配对买卖盘方向     C1     // MD405
-	int32_t m_OrdImbQty;        // 不能配对买卖盘量       N12    // MD405
+	//int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSS000 精度：秒
+	//int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSS000 精度：秒
+	//uint32_t m_VCMRefPrice;     // 市调机制参考价         N11(3) // MD404 // 10000
+	//uint32_t m_VCMLowerPrice;   // 市调机制下限价         N11(3) // MD404 // 10000
+	//uint32_t m_VCMUpperPrice;   // 市调机制上限价         N11(3) // MD404 // 10000
+
+	//uint32_t m_CASRefPrice;     // 收盘集合竞价时段参考价 N11(3) // MD405 // 10000
+	//uint32_t m_CASLowerPrice;   // 收盘集合竞价时段下限价 N11(3) // MD405 // 10000
+	//uint32_t m_CASUpperPrice;   // 收盘集合竞价时段上限价 N11(3) // MD405 // 10000
+	//char m_OrdImbDirection[2];  // 不能配对买卖盘方向     C1     // MD405 // 'N'、'B'、'S'、' '
+	//int32_t m_OrdImbQty;        // 不能配对买卖盘量       N12    // MD405
 
 	//int32_t m_Timestamp;        // 行情时间               C12    // MD401、MD404、MD405 // HHMMSS000 精度：秒
-
-	int32_t m_QuoteTime;        // 行情时间 // HHMMSS000 精度：秒
-	int32_t m_LocalTime;        // 本地时间 // HHMMSSmmm 精度：毫秒
-	uint32_t m_LocalIndex;      // 本地序号
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 };
 #endif
 
