@@ -141,6 +141,7 @@ public:
 	Json::StreamWriterBuilder m_json_writer;
 
 	int32_t m_local_date;
+	char* m_market_data_cache;
 	int64_t m_market_data_time;
 	size_t m_market_data_cache_size;
 	std::string m_market_data_file_path;

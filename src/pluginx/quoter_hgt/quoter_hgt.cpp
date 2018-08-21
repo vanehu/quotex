@@ -50,6 +50,7 @@ QuoterHGT_P::QuoterHGT_P()
 	, m_plugin_running( false )
 	, m_task_id( 0 )
 	, m_local_date( 0 )
+	, m_market_data_cache( false )
 	, m_market_data_time( 0 )
 	, m_market_data_cache_size( 0 )
 	, m_market_data_file_path( "" )
@@ -81,6 +82,11 @@ QuoterHGT_P::~QuoterHGT_P() {
 		}
 	}
 	m_csm_snapshot_stock.m_list_one_sub_con_del.clear();
+
+	if( m_market_data_cache != nullptr ) {
+		delete[] m_market_data_cache;
+		m_market_data_cache = nullptr;
+	}
 }
 
 void QuoterHGT_P::SetGlobalPath() {
@@ -1071,7 +1077,6 @@ void QuoterHGT_P::HandleMarketData() {
 	std::string log_info;
 
 	FILE* market_data_file = nullptr;
-	char* market_data_cache = nullptr;
 
 	SnapshotStock_HGT snapshot_stock_temp;
 
@@ -1104,22 +1109,22 @@ void QuoterHGT_P::HandleMarketData() {
 				size_t file_length = ftell( market_data_file ); // 获取文件长度
 				//std::cout << file_length << std::endl;
 				if( ( file_length + 1 ) > m_market_data_cache_size ) {
-					if( market_data_cache != nullptr ) {
-						delete[] market_data_cache;
-						market_data_cache = nullptr;
+					if( m_market_data_cache != nullptr ) {
+						delete[] m_market_data_cache;
+						m_market_data_cache = nullptr;
 					}
 					m_market_data_cache_size = file_length + 1;
-					market_data_cache = new char[m_market_data_cache_size];
+					m_market_data_cache = new char[m_market_data_cache_size];
 				}
 
 				Define_Head define_head;
 				if( file_length > define_head.m_line_size ) {
 					size_t cache_offset = 0; // 缓存位置偏移
-					memset( market_data_cache, 0, m_market_data_cache_size ); //
+					memset( m_market_data_cache, 0, m_market_data_cache_size ); //
 					fseek( market_data_file, 0, SEEK_SET ); // 移动到文件开始
-					fread( market_data_cache, file_length, 1, market_data_file ); // 一次性读取
+					fread( m_market_data_cache, file_length, 1, market_data_file ); // 一次性读取
 
-					define_head.FillData( market_data_cache, cache_offset );
+					define_head.FillData( m_market_data_cache, cache_offset );
 					cache_offset += define_head.m_line_size; //
 					//define_head.Print();
 					//std::cout << m_market_data_time << " " << define_head.m_market_data_time << " " << define_head.m_TotNumTradeReports << std::endl;
@@ -1130,7 +1135,7 @@ void QuoterHGT_P::HandleMarketData() {
 						for( int32_t i = 0; i < define_head.m_TotNumTradeReports; ++i ) {
 							Define_Type define_type;
 							if( ( file_length - cache_offset ) > define_type.m_line_size ) {
-								define_type.FillData( market_data_cache, cache_offset );
+								define_type.FillData( m_market_data_cache, cache_offset );
 								cache_offset += define_type.m_line_size;
 							    //define_type.Print();
 
@@ -1138,7 +1143,7 @@ void QuoterHGT_P::HandleMarketData() {
 								if( "MD401" == define_type.m_MDStreamID ) {
 									Define_MD401 define_md;
 									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
-										define_md.FillData( market_data_cache, cache_offset );
+										define_md.FillData( m_market_data_cache, cache_offset );
 										cache_offset += define_md.m_line_size; //
 										//Result_MD401 result_md;
 										//result_md.FillData( define_md );
@@ -1152,7 +1157,7 @@ void QuoterHGT_P::HandleMarketData() {
 								else if( "MD404" == define_type.m_MDStreamID ) {
 									Define_MD404 define_md;
 									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
-										define_md.FillData( market_data_cache, cache_offset );
+										define_md.FillData( m_market_data_cache, cache_offset );
 										cache_offset += define_md.m_line_size; //
 										//Result_MD404 result_md;
 										//result_md.FillData( define_md );
@@ -1166,7 +1171,7 @@ void QuoterHGT_P::HandleMarketData() {
 								else if( "MD405" == define_type.m_MDStreamID ) {
 									Define_MD405 define_md;
 									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
-										define_md.FillData( market_data_cache, cache_offset );
+										define_md.FillData( m_market_data_cache, cache_offset );
 										cache_offset += define_md.m_line_size; //
 										//Result_MD405 result_md;
 										//result_md.FillData( define_md );
@@ -1197,7 +1202,7 @@ void QuoterHGT_P::HandleMarketData() {
 
 						Define_Tail define_tail;
 						if( ( file_length - cache_offset ) >= define_tail.m_line_size ) {
-							define_tail.FillData( market_data_cache, cache_offset );
+							define_tail.FillData( m_market_data_cache, cache_offset );
 							cache_offset += define_tail.m_line_size; //
 							//define_tail.Print();
 						}
@@ -1216,11 +1221,6 @@ void QuoterHGT_P::HandleMarketData() {
 			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 		}
 	} // while
-
-	if( market_data_cache != nullptr ) {
-		delete[] market_data_cache;
-		market_data_cache = nullptr;
-	}
 
 	log_info = "行情数据处理线程退出！";
 	LogPrint( basicx::syslog_level::c_warn, log_info );
