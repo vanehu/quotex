@@ -1602,8 +1602,8 @@ void CThostFtdcMdSpiImpl::OnRtnDepthMarketData( CThostFtdcDepthMarketDataField* 
 	SYSTEMTIME sys_time;
 	GetLocalTime( &sys_time );
 	tm now_time_t = basicx::GetNowTime();
-	char now_date_temp[9];
-	strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
+	//char now_date_temp[9];
+	//strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
 
 	SnapshotFuture snapshot_future_temp;
 	memset( &snapshot_future_temp, 0, sizeof( SnapshotFuture ) );

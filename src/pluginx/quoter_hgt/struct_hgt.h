@@ -146,10 +146,10 @@ struct SnapshotStock_HGT // 所有变量均会被赋值
 	char m_market[6]; // 证券市场 // "HK"
 	char m_status[2]; // 证券状态 // "N"、"S"、"X"
 	uint32_t m_last; // 最新价 // 10000
-	uint32_t m_nominal; // 按盘价 // 10000
+	uint32_t m_open; // 开盘价 // 10000 // 无
 	uint32_t m_high; // 最高价 // 10000
 	uint32_t m_low; // 最低价 // 10000
-	uint32_t m_close; // 收盘价 // 10000
+	uint32_t m_close; // 收盘价 // 10000 // 按盘价
 	uint32_t m_pre_close; // 昨收价 // 10000
 	int64_t m_volume; // 成交量
 	int64_t m_turnover; // 成交额 // 10000
@@ -277,7 +277,7 @@ struct Define_Head
 	Define_Item m_item_09;
 	int32_t m_pos_end;
 
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	std::string m_BeginString;
@@ -360,10 +360,10 @@ struct Define_Head
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
 			try { // 防 m_txt 空
-				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
 				memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
 				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
@@ -414,7 +414,7 @@ struct Define_Head
 
 struct Define_Type
 {
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	std::string m_MDStreamID;
@@ -437,10 +437,10 @@ struct Define_Type
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
-			// 这里 fread 的是定长 m_line_buffer 最后一位已被 memset 为 0 且不变
-			fread( m_line_buffer, m_line_size, 1, market_data_file );
+			// 这里 memcpy 的是定长 m_line_buffer 最后一位已被 memset 为 0 且不变
+			memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 			m_MDStreamID = m_line_buffer;
 		}
 	}
@@ -471,7 +471,7 @@ struct Define_MD401
 	Define_Item m_item_17;
 	int32_t m_pos_end;
 
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	Define_MD401() {
@@ -544,10 +544,10 @@ struct Define_MD401
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
 			try { // 防 m_txt 空
-				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
 				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
 				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
@@ -587,7 +587,7 @@ struct Define_MD404
 	Define_Item m_item_10;
 	int32_t m_pos_end;
 
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	Define_MD404() {
@@ -639,10 +639,10 @@ struct Define_MD404
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
 			try { // 防 m_txt 空
-				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
 				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
 				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
@@ -675,7 +675,7 @@ struct Define_MD405
 	Define_Item m_item_10;
 	int32_t m_pos_end;
 
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	Define_MD405() {
@@ -727,10 +727,10 @@ struct Define_MD405
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
 			try { // 防 m_txt 空
-				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
 				// memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
 				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );
@@ -755,7 +755,7 @@ struct Define_Tail
 	Define_Item m_item_02;
 	int32_t m_pos_end;
 
-	int32_t m_line_size;
+	size_t m_line_size;
 	char* m_line_buffer;
 
 	std::string m_EndString;
@@ -788,10 +788,10 @@ struct Define_Tail
 		}
 	}
 
-	void FillData( FILE* market_data_file ) {
+	void FillData( char* data_cache, size_t offset ) {
 		if( m_line_buffer != nullptr ) {
 			try { // 防 m_txt 空
-				fread( m_line_buffer, m_line_size, 1, market_data_file );
+				memcpy( m_line_buffer, &data_cache[offset], m_line_size );
 				// 这里 memcpy 的都是定长 txt 最后一位已被 memset 为 0 且不变
 				memcpy( m_item_01.m_txt, &m_line_buffer[m_item_01.m_pos], m_item_01.m_len );
 				memcpy( m_item_02.m_txt, &m_line_buffer[m_item_02.m_pos], m_item_02.m_len );

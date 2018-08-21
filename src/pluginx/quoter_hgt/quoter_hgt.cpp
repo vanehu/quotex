@@ -49,7 +49,9 @@ QuoterHGT_P::QuoterHGT_P()
 	, m_work_thread_number( CFG_WORK_THREAD_NUM )
 	, m_plugin_running( false )
 	, m_task_id( 0 )
+	, m_local_date( 0 )
 	, m_market_data_time( 0 )
+	, m_market_data_cache_size( 0 )
 	, m_market_data_file_path( "" )
 	, m_log_cate( "<Quoter_HGT>" ) {
 	m_json_reader_builder["collectComments"] = false;
@@ -1068,90 +1070,156 @@ std::string QuoterHGT_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 void QuoterHGT_P::HandleMarketData() {
 	std::string log_info;
 
+	FILE* market_data_file = nullptr;
+	char* market_data_cache = nullptr;
+
+	SnapshotStock_HGT snapshot_stock_temp;
+
 	while( true == m_plugin_running ) {
-		FILE* market_data_file = nullptr;
-		fopen_s( &market_data_file, m_market_data_file_path.c_str(), "rb" );
-		//market_data_file = _fsopen( m_market_data_file_path.c_str(), "rb", _SH_DENYNO );
+		SYSTEMTIME sys_time;
+		GetLocalTime( &sys_time );
+		tm now_time_t = basicx::GetNowTime();
+		//char now_date_temp[9];
+		//strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
+
+		int32_t local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // YYYYMMDD
+		int32_t local_time = now_time_t.tm_hour * 100 + now_time_t.tm_min; // HHMM
+		if( ( m_local_date < local_date ) && ( local_time >= m_configs.m_init_time ) ) { // 重新打开文件，直到打开成功
+			if( market_data_file != nullptr ) {
+				fclose( market_data_file ); //
+				market_data_file = nullptr;
+			}
+			//fopen_s( &market_data_file, m_market_data_file_path.c_str(), "rb" ); // 非共享读 // 只读模式下才共享读，其他不共享
+			market_data_file = _fsopen( m_market_data_file_path.c_str(), "rb", _SH_DENYNO );
+			if( market_data_file != nullptr ) {
+				m_local_date = local_date; // 完成
+				FormatLibrary::StandardLibrary::FormatTo( log_info, "行情数据源文件打开成功。{0}", m_market_data_file_path );
+				LogPrint( basicx::syslog_level::c_info, log_info );
+			}
+		}
+
 		if( market_data_file != nullptr ) {
 			try {
-				Define_Head define_head;
-				define_head.FillData( market_data_file );
-				//define_head.Print();
-
-				if( define_head.m_market_data_time > m_market_data_time ) {
-					m_market_data_time = define_head.m_market_data_time;
-
-					SYSTEMTIME sys_time;
-					GetLocalTime( &sys_time );
-					tm now_time_t = basicx::GetNowTime();
-					char now_date_temp[9];
-					strftime( now_date_temp, 9, "%Y%m%d", &now_time_t);
-
-					SnapshotStock_HGT snapshot_stock_temp;
-
-					Define_Type define_type;
-					for( int32_t i = 0; i < define_head.m_TotNumTradeReports; ++i ) {
-						define_type.FillData( market_data_file );
-						//define_type.Print();
-
-						memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
-						if( "MD401" == define_type.m_MDStreamID ) {
-							Define_MD401 define_md;
-							define_md.FillData( market_data_file );
-							//Result_MD401 result_md;
-							//result_md.FillData( define_md );
-							//result_md.Print();
-							FillMarketData( "MD401", snapshot_stock_temp, define_md );
-						}
-						else if( "MD404" == define_type.m_MDStreamID ) {
-							Define_MD404 define_md;
-							define_md.FillData( market_data_file );
-							//Result_MD404 result_md;
-							//result_md.FillData( define_md );
-							//result_md.Print();
-							FillMarketData( "MD404", snapshot_stock_temp, define_md );
-						}
-						else if( "MD405" == define_type.m_MDStreamID ) {
-							Define_MD405 define_md;
-							define_md.FillData( market_data_file );
-							//Result_MD405 result_md;
-							//result_md.FillData( define_md );
-							//result_md.Print();
-							FillMarketData( "MD405", snapshot_stock_temp, define_md );
-						}
-						snapshot_stock_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
-						m_cache_snapshot_stock.m_local_index++;
-						snapshot_stock_temp.m_local_index = m_cache_snapshot_stock.m_local_index; // 本地序号
-						
-						m_cache_snapshot_stock.m_recv_num++;
-						
-						MS_AddData_SnapshotStock( snapshot_stock_temp );
-						
-						//std::string log_info;
-						//FormatLibrary::StandardLibrary::FormatTo( log_info, "行情反馈：代码:{0} 名称:{1} 最新:{2} 昨收:{3} 时间:{4}", 
-						//	snapshot_stock_temp.m_code, snapshot_stock_temp.m_name, snapshot_stock_temp.m_last, snapshot_stock_temp.m_pre_close, snapshot_stock_temp.m_quote_time );
-						//LogPrint( basicx::syslog_level::c_debug, log_info );
+				fseek( market_data_file, 0, SEEK_END ); // 移动到文件末尾 // 必须
+				size_t file_length = ftell( market_data_file ); // 获取文件长度
+				//std::cout << file_length << std::endl;
+				if( ( file_length + 1 ) > m_market_data_cache_size ) {
+					if( market_data_cache != nullptr ) {
+						delete[] market_data_cache;
+						market_data_cache = nullptr;
 					}
+					m_market_data_cache_size = file_length + 1;
+					market_data_cache = new char[m_market_data_cache_size];
+				}
 
-					Define_Tail define_tail;
-					define_tail.FillData( market_data_file );
-					//define_tail.Print();
+				Define_Head define_head;
+				if( file_length > define_head.m_line_size ) {
+					size_t cache_offset = 0; // 缓存位置偏移
+					memset( market_data_cache, 0, m_market_data_cache_size ); //
+					fseek( market_data_file, 0, SEEK_SET ); // 移动到文件开始
+					fread( market_data_cache, file_length, 1, market_data_file ); // 一次性读取
 
-					fclose( market_data_file ); //
+					define_head.FillData( market_data_cache, cache_offset );
+					cache_offset += define_head.m_line_size; //
+					//define_head.Print();
+					//std::cout << m_market_data_time << " " << define_head.m_market_data_time << " " << define_head.m_TotNumTradeReports << std::endl;
+
+					if( define_head.m_market_data_time > m_market_data_time ) { // 文件已更新
+						m_market_data_time = define_head.m_market_data_time;
+
+						for( int32_t i = 0; i < define_head.m_TotNumTradeReports; ++i ) {
+							Define_Type define_type;
+							if( ( file_length - cache_offset ) > define_type.m_line_size ) {
+								define_type.FillData( market_data_cache, cache_offset );
+								cache_offset += define_type.m_line_size;
+							    //define_type.Print();
+
+								memset( &snapshot_stock_temp, 0, sizeof( SnapshotStock_HGT ) );
+								if( "MD401" == define_type.m_MDStreamID ) {
+									Define_MD401 define_md;
+									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
+										define_md.FillData( market_data_cache, cache_offset );
+										cache_offset += define_md.m_line_size; //
+										//Result_MD401 result_md;
+										//result_md.FillData( define_md );
+										//result_md.Print();
+										FillMarketData( "MD401", snapshot_stock_temp, define_md );
+									}
+									else {
+										break; // for
+									}
+								}
+								else if( "MD404" == define_type.m_MDStreamID ) {
+									Define_MD404 define_md;
+									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
+										define_md.FillData( market_data_cache, cache_offset );
+										cache_offset += define_md.m_line_size; //
+										//Result_MD404 result_md;
+										//result_md.FillData( define_md );
+										//result_md.Print();
+										FillMarketData( "MD404", snapshot_stock_temp, define_md );
+									}
+									else {
+										break; // for
+									}
+								}
+								else if( "MD405" == define_type.m_MDStreamID ) {
+									Define_MD405 define_md;
+									if( ( file_length - cache_offset ) > define_md.m_line_size ) {
+										define_md.FillData( market_data_cache, cache_offset );
+										cache_offset += define_md.m_line_size; //
+										//Result_MD405 result_md;
+										//result_md.FillData( define_md );
+										//result_md.Print();
+										FillMarketData( "MD405", snapshot_stock_temp, define_md );
+									}
+									else {
+										break; // for
+									}
+								}
+								snapshot_stock_temp.m_local_time = now_time_t.tm_hour * 10000000 + now_time_t.tm_min * 100000 + now_time_t.tm_sec * 1000 + sys_time.wMilliseconds; // 本地时间 // HHMMSSmmm 精度：毫秒
+								m_cache_snapshot_stock.m_local_index++;
+								snapshot_stock_temp.m_local_index = m_cache_snapshot_stock.m_local_index; // 本地序号
+
+								m_cache_snapshot_stock.m_recv_num++;
+
+								MS_AddData_SnapshotStock( snapshot_stock_temp );
+
+								//std::string log_info;
+								//FormatLibrary::StandardLibrary::FormatTo( log_info, "行情反馈：代码:{0} 名称:{1} 最新:{2} 昨收:{3} 时间:{4}", 
+								//	snapshot_stock_temp.m_code, snapshot_stock_temp.m_name, snapshot_stock_temp.m_last, snapshot_stock_temp.m_pre_close, snapshot_stock_temp.m_quote_time );
+								//LogPrint( basicx::syslog_level::c_debug, log_info );
+							}
+							else {
+								break; // for
+							}
+						}
+
+						Define_Tail define_tail;
+						if( ( file_length - cache_offset ) >= define_tail.m_line_size ) {
+							define_tail.FillData( market_data_cache, cache_offset );
+							cache_offset += define_tail.m_line_size; //
+							//define_tail.Print();
+						}
+					}
 				}
 			}
 			catch( ... ) {
-				fclose( market_data_file ); //
 				std::string log_info = "行情数据处理发生未知异常！";
 				LogPrint( basicx::syslog_level::c_error, log_info );
 			}
+			std::this_thread::sleep_for( std::chrono::seconds( 3 ) );
 		}
 		else {
-			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 			FormatLibrary::StandardLibrary::FormatTo( log_info, "行情数据源文件打开失败！{0}", m_market_data_file_path );
 			LogPrint( basicx::syslog_level::c_error, log_info );
+			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
 		}
-		std::this_thread::sleep_for( std::chrono::seconds( 1 ) );
+	} // while
+
+	if( market_data_cache != nullptr ) {
+		delete[] market_data_cache;
+		market_data_cache = nullptr;
 	}
 
 	log_info = "行情数据处理线程退出！";
@@ -1195,10 +1263,10 @@ void QuoterHGT_P::FillMarketData( std::string data_type, SnapshotStock_HGT& snap
 			strcpy_s( snapshot_stock.m_status, "X" ); // 证券状态 // "N"、"S"、"X"
 		}
 		snapshot_stock.m_last = (uint32_t)( atof( market_data.m_item_11.m_txt ) * 10000 ); // 最新价 // 10000
-		snapshot_stock.m_nominal = (uint32_t)( atof( market_data.m_item_08.m_txt ) * 10000 ); // 按盘价 // 10000
+		//snapshot_stock.m_open; // 开盘价 // 10000 // 无
 		snapshot_stock.m_high = (uint32_t)( atof( market_data.m_item_09.m_txt ) * 10000 ); // 最高价 // 10000
 		snapshot_stock.m_low = (uint32_t)( atof( market_data.m_item_10.m_txt ) * 10000 ); // 最低价 // 10000
-		snapshot_stock.m_close = (uint32_t)( atof( market_data.m_item_11.m_txt ) * 10000 ); // 收盘价 // 10000
+		snapshot_stock.m_close = (uint32_t)( atof( market_data.m_item_08.m_txt ) * 10000 ); // 收盘价 // 10000 // 按盘价
 		snapshot_stock.m_pre_close = (uint32_t)( atof( market_data.m_item_07.m_txt ) * 10000 ); // 昨收价 // 10000
 		snapshot_stock.m_volume = atoll( market_data.m_item_05.m_txt ); // 成交量
 		snapshot_stock.m_turnover = (int64_t)( atof( market_data.m_item_06.m_txt ) * 10000 ); // 成交额 // 10000
