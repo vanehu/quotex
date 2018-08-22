@@ -130,6 +130,9 @@ bool QuoterSGT_P::ReadConfig( std::string file_path ) {
 	m_configs.m_dump_time = atoi( node_plugin.child_value( "DumpTime" ) );
 	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
 
+	m_configs.m_source_time_start = atoi( node_plugin.child_value( "SourceTimeStart" ) );
+	m_configs.m_source_time_stop = atoi( node_plugin.child_value( "SourceTimeStop" ) );
+
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5}", m_configs.m_address, m_configs.m_port, 
 	// m_configs.m_username, m_configs.m_password, m_configs.m_sender_id, m_configs.m_timeout );
 	//LogPrint( basicx::syslog_level::c_debug, log_info );
@@ -421,12 +424,16 @@ void QuoterSGT_P::OnTimer() {
 			bool init_quote_data_file = false;
 			while( true ) {
 				if( false == m_connect_ok ) { // 进行自动重连
+					tm now_time_t = basicx::GetNowTime();
+					int32_t now_time = now_time_t.tm_hour * 100 + now_time_t.tm_min;
+					if( ( now_time >= m_configs.m_source_time_start ) && ( now_time < m_configs.m_source_time_stop ) ) { // 此时间段内才进行登录更新
 #ifdef NET_CLIENT_USE_ASIO
-					QuoteLogin_Asio();
+						QuoteLogin_Asio();
 #endif
 #ifdef NET_CLIENT_USE_SOCK
-					QuoteLogin_Sock();
+						QuoteLogin_Sock();
 #endif
+					}
 				}
 
 				for( size_t i = 0; i < (size_t)m_configs.m_dump_time; i++ ) { // 间隔需小于60秒
@@ -1109,7 +1116,7 @@ std::string QuoterSGT_P::OnErrorResult( int32_t ret_func, int32_t ret_code, std:
 
 ////////////////////////////// Asio //////////////////////////////
 
-int32_t QuoterSGT_P::QuoteLogin_Asio() {
+int32_t QuoterSGT_P::QuoteLogin_Asio() { // 只在 OnTimer() 中调用
 	std::string log_info;
 
 	QuoteLogout_Asio();
