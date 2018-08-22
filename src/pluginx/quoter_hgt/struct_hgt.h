@@ -104,6 +104,8 @@ struct Config // 保证均被赋值
 	int32_t m_data_encode;
 	int32_t m_dump_time;
 	int32_t m_init_time;
+	int32_t m_source_time_start;
+	int32_t m_source_time_stop;
 };
 
 template<typename T>

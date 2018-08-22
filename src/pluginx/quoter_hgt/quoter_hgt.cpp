@@ -122,6 +122,9 @@ bool QuoterHGT_P::ReadConfig( std::string file_path ) {
 	m_configs.m_dump_time = atoi( node_plugin.child_value( "DumpTime" ) );
 	m_configs.m_init_time = atoi( node_plugin.child_value( "InitTime" ) );
 
+	m_configs.m_source_time_start = atoi( node_plugin.child_value( "SourceTimeStart" ) );
+	m_configs.m_source_time_stop = atoi( node_plugin.child_value( "SourceTimeStop" ) );
+
 	//FormatLibrary::StandardLibrary::FormatTo( log_info, "{0} {1} {2} {3} {4} {5} {6}", m_configs.m_market_data_folder, 
 	//	m_configs.m_need_dump, m_configs.m_dump_path, m_configs.m_data_compress, m_configs.m_data_encode, m_configs.m_dump_time, m_configs.m_init_time );
 	//LogPrint( basicx::syslog_level::c_debug, log_info );
@@ -1089,6 +1092,12 @@ void QuoterHGT_P::HandleMarketData() {
 
 		int32_t local_date = ( now_time_t.tm_year + 1900 ) * 10000 + ( now_time_t.tm_mon + 1 ) * 100 + now_time_t.tm_mday; // YYYYMMDD
 		int32_t local_time = now_time_t.tm_hour * 100 + now_time_t.tm_min; // HHMM
+
+		if( ( local_time < m_configs.m_source_time_start ) || ( local_time >= m_configs.m_source_time_stop ) ) { // 此时间段外不进行读取更新
+			std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+			continue; // while
+		}
+
 		if( ( m_local_date < local_date ) && ( local_time >= m_configs.m_init_time ) ) { // 重新打开文件，直到打开成功
 			if( market_data_file != nullptr ) {
 				fclose( market_data_file ); //
