@@ -193,16 +193,44 @@ struct MDGW_Heartbeat
 	MDGW_Tailer mdgw_tailer;
 };
 
+struct MDGW_Snapshot_Body // 快照行情消息定义
+{
+	int64_t m_OrigTime; // 数据生成时间 Int64 YYYYMMDDHHMMSSsss
+	uint16_t m_ChannelNo; // 频道代码 uInt16
+	char m_MDStreamID[3]; // 行情类别 char[3]
+	char m_SecurityID[8]; // 证券代码 char[8]
+	char m_SecurityIDSource[4]; // 证券代码源 char[4] 102深交所 103港交所
+	char m_TradingPhaseCode[8]; // 产品所处的交易阶段代码 char[8]
+	int64_t m_PrevClosePx; // 昨收价 Int64 N13(4)
+	int64_t m_NumTrades; // 成交笔数 Int64
+	int64_t m_TotalVolumeTrade; // 成交总量 Int64 N15(2)
+	int64_t m_TotalValueTrade; // 成交总金额 Int64 N18(4)
+};
+
+struct MDGW_HK_MDEntries // 港股实时行情快照扩展字段 - 行情条目
+{
+	char m_MDEntryType[2]; // 行情条目类别 char[2]
+	int64_t m_MDEntryPx; // 价格 Int64 N18(6)
+	int64_t m_MDEntrySize; // 数量 Int64 N15(2)
+	uint16_t m_MDPriceLevel; // 买卖盘档位 uInt16
+};
+
+struct MDGW_HK_ComplexEventTimes // 港股实时行情快照扩展字段 - VCM 冷静期
+{
+	int64_t m_ComplexEventStartTime; // 冷静期开始时间 Int64 YYYYMMDDHHMMSSsss
+	int64_t m_ComplexEventEndTime; // 冷静期结束时间 Int64 YYYYMMDDHHMMSSsss
+};
+
 #define DEF_MDGW_MSG_TYPE_LOGON 1
 #define DEF_MDGW_MSG_TYPE_LOGOUT 2
 #define DEF_MDGW_MSG_TYPE_HEARTBEAT 3
 #define DEF_MDGW_MSG_TYPE_SNAPSHOT_STOCK_SGT 306311 // 港股实时行情
 
-uint32_t g_size_mdgw_header = sizeof( MDGW_Header ); // 8
-uint32_t g_size_mdgw_tailer = sizeof( MDGW_Tailer ); // 4
-uint32_t g_size_mdgw_logon_body = sizeof( MDGW_Logon_Body ); // 92
-uint32_t g_size_mdgw_logout_body = sizeof( MDGW_Logout_Body ); // 204
-uint32_t g_size_mdgw_heartbeat_body = 0; // 空结构体长度为 1
+uint32_t g_size_mdgw_header = sizeof( MDGW_Header ); // 8 字节
+uint32_t g_size_mdgw_tailer = sizeof( MDGW_Tailer ); // 4 字节
+uint32_t g_size_mdgw_logon_body = sizeof( MDGW_Logon_Body ); // 92 字节
+uint32_t g_size_mdgw_logout_body = sizeof( MDGW_Logout_Body ); // 204 字节
+uint32_t g_size_mdgw_heartbeat_body = 0; // 空结构体长度为 1 字节
 
 uint32_t MDGW_GenerateCheckSum( char* buffer, uint32_t bufer_length ) {
 	uint32_t check_sum = 0;
@@ -235,39 +263,59 @@ std::string MDGW_SessionStatus( int32_t status ) {
 #ifdef SNAPSHOT_STOCK_SGT_V1
 struct SnapshotStock_SGT // 所有变量均会被赋值
 {
-	char m_MDStreamID[6];       // 行情数据类型           C5     // MD401、MD404、MD405
-	char m_SecurityID[6];       // 证券代码               C5     // MD401、MD404、MD405
-	char m_Symbol[33];          // 中文证券简称           C32    // MD401、MD404、MD405
-	char m_SymbolEn[17];        // 英文证券简称           C15/16 // MD401、MD404、MD405
+	char m_code[8]; // 证券代码
+	char m_name[33]; // 证券名称 // 中文名称 // 无
+	char m_type[6]; // 证券类型 // "H"
+	char m_market[6]; // 证券市场 // "HK"
+	char m_status[2]; // 证券状态 // "N"、"S"、"X"
+	uint32_t m_last; // 最新价 // 10000
+	uint32_t m_open; // 开盘价 // 10000 // 无
+	uint32_t m_high; // 最高价 // 10000
+	uint32_t m_low; // 最低价 // 10000
+	uint32_t m_close; // 收盘价 // 10000 // 按盘价
+	uint32_t m_pre_close; // 昨收价 // 10000
+	int64_t m_volume; // 成交量
+	int64_t m_turnover; // 成交额 // 10000
+	uint32_t m_ask_price[10]; // 申卖价 // 10000
+	int32_t m_ask_volume[10]; // 申卖量
+	uint32_t m_bid_price[10]; // 申买价 // 10000
+	int32_t m_bid_volume[10]; // 申买量
+	uint32_t m_high_limit; // 涨停价 // 10000
+	uint32_t m_low_limit; // 跌停价 // 10000
+	int32_t m_trade_count; // 成交笔数
+	int32_t m_vcm_start_time; // 冷静期开始时间 // HHMMSSmmm 精度：秒
+	int32_t m_vcm_end_time; // 冷静期结束时间 // HHMMSSmmm 精度：秒
+	int32_t m_quote_time; // 行情时间 // HHMMSSmmm 精度：秒
+	int32_t m_local_time; // 本地时间 // HHMMSSmmm 精度：毫秒
+	uint32_t m_local_index; // 本地序号
 
-	int64_t m_TradeVolume;      // 成交数量               N16    // MD401
-	int64_t m_TotalValueTraded; // 成交金额               N16(3) // MD401 // 10000
-	uint32_t m_PreClosePx;      // 昨日收盘价             N11(3) // MD401 // 10000
-	uint32_t m_NominalPrice;    // 按盘价                 N11(3) // MD401 // 10000
-	uint32_t m_HighPrice;       // 最高价                 N11(3) // MD401 // 10000
-	uint32_t m_LowPrice;        // 最低价                 N11(3) // MD401 // 10000
-	uint32_t m_TradePrice;      // 最新价                 N11(3) // MD401 // 10000
-	uint32_t m_BuyPrice1;       // 申买价一               N11(3) // MD401 // 10000
-	int32_t m_BuyVolume1;       // 申买量一               N12    // MD401
-	uint32_t m_SellPrice1;      // 申卖价一               N11(3) // MD401 // 10000
-	int32_t m_SellVolume1;      // 申卖量一               N12    // MD401
-	int32_t m_SecTradingStatus; // 证券交易状态           C8     // MD401
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Standard Header           消息头                  MsgType = 306311
 
-	int32_t m_VCMStartTime;     // 市调机制开始时间       C8     // MD404 // HHMMSS000 精度：秒
-	int32_t m_VCMEndTime;       // 市调机制结束时间       C8     // MD404 // HHMMSS000 精度：秒
-	uint32_t m_VCMRefPrice;     // 市调机制参考价         N11(3) // MD404 // 10000
-	uint32_t m_VCMLowerPrice;   // 市调机制下限价         N11(3) // MD404 // 10000
-	uint32_t m_VCMUpperPrice;   // 市调机制上限价         N11(3) // MD404 // 10000
+	//OrigTime                  数据生成时间            Int64 YYYYMMDDHHMMSSsss
+	//ChannelNo                 频道代码                uInt16
+	//MDStreamID                行情类别                char[3] = 630
+	//SecurityID                证券代码                char[8]
+	//SecurityIDSource          证券代码源              char[4] 102深交所 103港交所
+	//TradingPhaseCode          产品所处的交易阶段代码  char[8]
+	//    第 0 位：S = 启动( 开市前 )、O = 开盘集合竞价、T = 连续竞价、B = 休市、C = 收盘集合竞价、E = 已闭市、H = 临时停牌、A = 盘后交易、V = 波动性中断
+	//    第 1 位：0 = 正常状态、1 = 全天停牌
+	//PrevClosePx               昨收价                  Int64 N13(4)
+	//NumTrades                 成交笔数                Int64
+	//TotalVolumeTrade          成交总量                Int64 N15(2)
+	//TotalValueTrade           成交总金额              Int64 N18(4)
 
-	uint32_t m_CASRefPrice;     // 收盘集合竞价时段参考价 N11(3) // MD405 // 10000
-	uint32_t m_CASLowerPrice;   // 收盘集合竞价时段下限价 N11(3) // MD405 // 10000
-	uint32_t m_CASUpperPrice;   // 收盘集合竞价时段上限价 N11(3) // MD405 // 10000
-	char m_OrdImbDirection[2];  // 不能配对买卖盘方向     C1     // MD405
-	int32_t m_OrdImbQty;        // 不能配对买卖盘量       N12    // MD405
-
-	int32_t m_QuoteTime;        // 行情时间 // HHMMSS000 精度：秒
-	int32_t m_LocalTime;        // 本地时间 // HHMMSSmmm 精度：毫秒
-	uint32_t m_LocalIndex;      // 本地序号
+	//NoMDEntries               行情条目个数            uInt32
+	//    MDEntryType           行情条目类别            char[2]
+	//        0 = 买入、1 = 卖出、2 = 最近价、7 = 最高价、8 = 最低价、xe = 涨停价、xf = 跌停价、xh = 按盘价（收盘后为收盘价格）、xi = 参考价
+	//    MDEntryPx             价格                    Int64 N18(6)
+	//    MDEntrySize           数量                    Int64 N15(2)
+	//    MDPriceLevel          买卖盘档位              uInt16
+	//NoComplexEventTimes       冷静期个数              uInt32
+	//    0 或 1，为 1 表示当前处于触发 VCM 的冷静期，下面的时间是冷静期的开始结束时间
+	//    ComplexEventStartTime 冷静期开始时间          Int64 YYYYMMDDHHMMSSsss
+	//    ComplexEventEndTime   冷静期结束时间          Int64 YYYYMMDDHHMMSSsss
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 };
 #endif
 
