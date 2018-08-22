@@ -5,7 +5,7 @@ License: BSD
 Website: https://cmake.org
 
 Library: BasicX
-Version: 0.5.0
+Version: 0.5.4
 License: BSD
 Website: https://github.com/xurendong/basicx
 
@@ -30,6 +30,6 @@ License: MIT
 Website: https://github.com/open-source-parsers/jsoncpp
 
 Library: zlib
-Version: 1.2.8
+Version: 1.2.11
 License: ZLIB
 Website: http://www.zlib.net/
