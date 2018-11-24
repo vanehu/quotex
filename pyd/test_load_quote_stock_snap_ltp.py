@@ -26,27 +26,53 @@
 #　 　　具体行情数据格式请参考相关业务文档。
 
 import LoadQuoteStockSnapLTP
+import SplitQuoteStockSnapLTP
 
 file_head = 32
-file_code = "lzma"
-data_code = "utf8"
-file_path = "C:\\Users\\xrd\\Desktop\\20160615.hq.lzma"
+file_code = ""
+data_code = "gbk"
+file_path = "F:\\201810\\20181031.hq"
+
+file_list_sh = []
+file_list_sz = []
 
 list_info = []
 dict_data = {}
 
-#result = LoadQuoteStockSnapLTP.LoadQuote(file_path, file_head, file_code, data_code, "", list_info, dict_data) # 注意内存哦
-result = LoadQuoteStockSnapLTP.LoadQuote(file_path, file_head, file_code, data_code, "600000, 000001, 600004, 000005", list_info, dict_data)
+def PrintQuoteData(result, list_info, dict_data):
+    print(result, len(list_info))
+    if result >= 0:
+        for i in range(result):
+            print(dict_data["Code"][i], dict_data["Name"][i], dict_data["Type"][i], dict_data["Market"][i], dict_data["Status"][i], \
+                  dict_data["Last"][i], dict_data["Close"][i], dict_data["Volume"][i], dict_data["Turnover"][i])
+            for j in range(10):
+                print(dict_data["AskPrice"][j][i], dict_data["AskVolume"][j][i], dict_data["BidPrice"][j][i], dict_data["BidVolume"][j][i])
+            print(dict_data["QuoteTime"][i], dict_data["LocalTime"][i], dict_data["LocalIndex"][i])
+        for i in range(len(list_info)):
+            print("成功：", list_info[i])
+    else:
+        for i in range(len(list_info)):
+            print("失败：", list_info[i])
+
+result = SplitQuoteStockSnapLTP.SplitQuote(file_path, file_head, file_code, "600000, 000001, 600004, 000005", list_info, file_list_sh, file_list_sz)
 print(result, len(list_info))
 if result >= 0:
-    for i in range(result):
-        print(dict_data["Code"][i], dict_data["Name"][i], dict_data["Type"][i], dict_data["Market"][i], dict_data["Status"][i], \
-              dict_data["Last"][i], dict_data["Close"][i], dict_data["Volume"][i], dict_data["Turnover"][i])
-        for j in range(10):
-            print(dict_data["AskPrice"][j][i], dict_data["AskVolume"][j][i], dict_data["BidPrice"][j][i], dict_data["BidVolume"][j][i])
-        print(dict_data["QuoteTime"][i], dict_data["LocalTime"][i], dict_data["LocalIndex"][i])
+    for i in range(len(file_list_sh)):
+        print("SH：", file_list_sh[i])
+    if len(file_list_sh) > 0:
+        result = LoadQuoteStockSnapLTP.LoadQuote(file_list_sh[0], file_head, file_code, data_code, "", list_info, dict_data)
+        PrintQuoteData(result, list_info, dict_data)
+    for i in range(len(file_list_sz)):
+        print("SZ：", file_list_sz[i])
+    if len(file_list_sz) > 0:
+        result = LoadQuoteStockSnapLTP.LoadQuote(file_list_sz[0], file_head, file_code, data_code, "", list_info, dict_data)
+        PrintQuoteData(result, list_info, dict_data)
     for i in range(len(list_info)):
         print("成功：", list_info[i])
 else:
     for i in range(len(list_info)):
         print("失败：", list_info[i])
+
+#result = LoadQuoteStockSnapLTP.LoadQuote(file_path, file_head, file_code, data_code, "", list_info, dict_data) # 注意内存哦
+result = LoadQuoteStockSnapLTP.LoadQuote(file_path, file_head, file_code, data_code, "600000, 000001, 600004, 000005", list_info, dict_data)
+PrintQuoteData(result, list_info, dict_data)
